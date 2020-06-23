@@ -8,6 +8,8 @@ var userModel = require('../models/userModel');
 const { json } = require('express');
 const saltRounds = 12;
 
+var { response, DEFINED_CODE } = require('../config/response');
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
@@ -26,11 +28,13 @@ router.post('/login', (req, res, next) => {
   console.log(req.body);
   passport.authenticate('local', { session: false }, (err, user, cb) => {
     if (user === false) {
-      res.json("Wrong info");
+      // res.json("Wrong info");
+      response(res, DEFINED_CODE.WRONG_LOGIN_INFO);
     }
     else {
       if (err || !user) {
-        res.json("Wrong info"); return;
+        response(res, DEFINED_CODE.WRONG_LOGIN_INFO);
+        return;
       }
 
       req.login(user, { session: false }, (err) => {
@@ -39,7 +43,7 @@ router.post('/login', (req, res, next) => {
         }
         let payload = { id: user.loginUser.id_user, isManager: user.loginUser.isManager };
         const token = jwt.sign(payload, 'S_Team', { expiresIn: '24h' });
-        return res.json({ user: user.loginUser, token });
+        return response(res, DEFINED_CODE.LOGIN_SUCCESS, { user: user.loginUser, token });
       });
     }
   })(req, next);
