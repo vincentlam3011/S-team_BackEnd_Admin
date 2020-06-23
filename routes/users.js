@@ -121,6 +121,7 @@ router.put('/setClientUserStatus', (req, res, next) => {
 router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
   var { page, take, account_status } = req.body;
   var isBusinessUser = req.params.isBusinessUser;
+  page -= 1;
   if (isBusinessUser == 0) {
     userModel.getClientPersonalUsers(account_status, page, take)
       .then(data => {
