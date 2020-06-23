@@ -119,11 +119,11 @@ router.put('/setClientUserStatus', (req, res, next) => {
 })
 
 router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
-  var { page, take, account_status } = req.body;
+  var { page, take, account_status, queryName } = req.body;
   var isBusinessUser = req.params.isBusinessUser;
   page -= 1;
   if (isBusinessUser == 0) {
-    userModel.getClientPersonalUsers(account_status, page, take)
+    userModel.getClientPersonalUsers(account_status, page, take, queryName)
       .then(data => {
         if (data.length > 0) {
           response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
@@ -134,7 +134,7 @@ router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
   } else {
-    userModel.getClientBusinessUsers(account_status, page, take)
+    userModel.getClientBusinessUsers(account_status, page, take, queryName)
       .then(data => {
         response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
       }).catch(err => {

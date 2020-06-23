@@ -1,5 +1,6 @@
 var db = require('../utils/db');
 var convertBlobB64 = require('../middleware/convertBlobB64');
+const { query } = require('express');
 
 module.exports = {
     getEmployees: () => {
@@ -33,18 +34,28 @@ module.exports = {
         }
         return db.query(`update users set account_status = ${account_status} where id_user = ${id_user}`)
     },
-    getClientPersonalUsers: (account_status, page, take) => {
+    getClientPersonalUsers: (account_status, page, take, queryName) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status `;
+        if (!queryName.replace(/\s/g, '').length) {
+            queryName = '';
+        }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0 limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%')
+            limit ${page * take}, ${take};`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0 limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%')
+            limit ${page * take}, ${take};`);
     },
-    getClientBusinessUsers: (account_status, page, take) => {
+    getClientBusinessUsers: (account_status, page, take, queryName) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status `;
+        if (!queryName.replace(/\s/g, '').length) {
+            queryName = '';
+        }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 1 limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 1 and (fullname like '%${queryName}%' or email like '%${queryName}%')
+            limit ${page * take}, ${take};`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 1 limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 1  and (fullname like '%${queryName}%' or email like '%${queryName}%')
+            limit ${page * take}, ${take};`);
     }
 }
