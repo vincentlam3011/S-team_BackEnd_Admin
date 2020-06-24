@@ -7,6 +7,8 @@ var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var topicsRouter = require('./routes/topics');
+var jobsRouter = require('./routes/jobs');
 
 var app = express();
 var bodyParser = require('body-parser');
@@ -39,6 +41,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', passportStrategy, usersRouter);
+app.use('/topics', passportStrategy, topicsRouter );
+app.use('/jobs', passportStrategy, jobsRouter );
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

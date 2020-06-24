@@ -1,6 +1,5 @@
 var db = require('../utils/db');
 var convertBlobB64 = require('../middleware/convertBlobB64');
-const { query } = require('express');
 
 module.exports = {
     getEmployees: () => {
@@ -23,8 +22,8 @@ module.exports = {
     },
     addEmployee: (employee) => {
         var insertQuery = `insert into employees `;
-        var colQuery = `(username, tel, password) `;
-        var valQuery = `values('${employee.username}', '${employee.tel}', '${employee.password}');`;
+        var colQuery = `(username, tel, password, fullname) `;
+        var valQuery = `values('${employee.username}', '${employee.tel}', '${employee.password}', '${employee.fullname}');`;
         var query = insertQuery + colQuery + valQuery;
         return db.query(query);
     },
@@ -34,28 +33,27 @@ module.exports = {
         }
         return db.query(`update users set account_status = ${account_status} where id_user = ${id_user}`)
     },
-    getClientPersonalUsers: (account_status, page, take, queryName) => {
+    getClientPersonalUsers: (account_status, queryName) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status `;
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%')
-            limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%')
-            limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
     },
-    getClientBusinessUsers: (account_status, page, take, queryName) => {
+    getClientBusinessUsers: (account_status, queryName) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status `;
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 1 and (fullname like '%${queryName}%' or email like '%${queryName}%')
-            limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 1 and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 1  and (fullname like '%${queryName}%' or email like '%${queryName}%')
-            limit ${page * take}, ${take};`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 1  and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
+    },
+    deleteAnEmployee: (id_user) => {
+        return db.query(`delete from employees where id_user = ${id_user}`);
     }
 }

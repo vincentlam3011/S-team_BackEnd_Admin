@@ -6,7 +6,6 @@ var bcrypt = require('bcrypt');
 const { response, DEFINED_CODE } = require('../config/response');
 const saltRounds = 12;
 
-/* GET users listing. */
 router.get('/', function (req, res, next) {
   var token = req.headers.authorization.slice(7);
   var decodedPayload = jwt.decode(token, {
@@ -26,39 +25,76 @@ router.post('/addEmployee', function (req, res, next) {
   var decodedPayload = jwt.decode(token, {
     secret: 'S_Team',
   });
-  let id_user = decodedPayload.id;
-  userModel.getById(id_user)
-    .then(user => {
-      if (user[0].isManager) {
-        userModel.getByUsername(employee.username)
-          .then(existing => {
-            if (existing.length > 0) {
-              // res.json("Existed");
-              response(res, DEFINED_CODE.USERNAME_EXISTED);
-            } else {
-              bcrypt.hash(employee.password, saltRounds, (err, hash) => {
-                if (err) {
-                  res.json({ message: "Bcrypt error", code: 0 });
-                }
-                employee.password = hash;
-                userModel.addEmployee(employee)
-                  .then(result => {
-                    // res.json(result);
-                    response(res, DEFINED_CODE.CREATED_DATA_SUCCESS, result);
-                  }).catch(err => {
-                    // res.json(err);
-                    response(res, DEFINED_CODE.CREATE_DATA_FAIL, err);
-                  })
-              })
+  let isMng = decodedPayload.isManager;
+  if (isMng !== 0) {
+    userModel.getByUsername(employee.username)
+      .then(existing => {
+        if (existing.length > 0) {
+          // res.json("Existed");
+          response(res, DEFINED_CODE.USERNAME_EXISTED);
+        } else {
+          bcrypt.hash(employee.password, saltRounds, (err, hash) => {
+            if (err) {
+              response(res, DEFINED_CODE.CREATE_DATA_FAIL, { sys: err, msg: "Bcrypt failed" });
             }
-          }).catch(err => {
-            res.json(err);
+            employee.password = hash;
+            userModel.addEmployee(employee)
+              .then(result => {
+                // res.json(result);
+                response(res, DEFINED_CODE.CREATED_DATA_SUCCESS, result);
+              }).catch(err => {
+                // res.json(err);
+                response(res, DEFINED_CODE.CREATE_DATA_FAIL, err);
+              })
           })
+        }
+      }).catch(err => {
+        response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+      })
+  } else {
+    response(res, DEFINED_CODE.CREATE_DATA_FAIL, `Cannot add employees if is not manager!`)
+  }
+})
+
+router.delete('/deleteEmployee/:id', function (req, res, next) {
+  var id_employee = req.params.id;
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  let isMng = decodedPayload.isManager;
+  let id_user = decodedPayload.id;
+  // return res.json(decodedPayload);
+  if (isMng === 0) {
+    response(res, DEFINED_CODE.INTERACT_DATA_FAIL, "Rejection due to not being an admin!");
+  }
+  userModel.getById(id_employee)
+    .then(user => {
+      if (user[0].id_user !== id_user) {
+        if (isMng === 2) {
+          userModel.deleteAnEmployee(id_employee)
+            .then(result => {
+              response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
+            }).catch(err => {
+              response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+            })
+        } else {
+          if (user[0].isManager === 1) {
+            response(res, DEFINED_CODE.ACTIVATE_FAIL, `Cannot remove another admin if is not an executive!`);
+          } else {
+            userModel.deleteAnEmployee(id_employee)
+              .then(result => {
+                response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
+              }).catch(err => {
+                response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+              })
+          }
+        }
       } else {
-        return res.json("Cannot add employees if is not manager!");
+        response(res, DEFINED_CODE.INTERACT_DATA_FAIL, `Cannot remove yourself`);
       }
     }).catch(err => {
-      res.json(err);
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
     })
 })
 
@@ -119,24 +155,26 @@ router.put('/setClientUserStatus', (req, res, next) => {
 })
 
 router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
-  var { page, take, account_status, queryName } = req.body;
+  var { account_status, queryName } = req.body;
+  let page = Number.parseInt(req.body.page) || 1;
+  let take = Number.parseInt(req.body.take) || 6;
   var isBusinessUser = req.params.isBusinessUser;
-  page -= 1;
   if (isBusinessUser == 0) {
-    userModel.getClientPersonalUsers(account_status, page, take, queryName)
+    userModel.getClientPersonalUsers(account_status, queryName)
       .then(data => {
-        if (data.length > 0) {
-          response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
-        } else {
-          response(res, DEFINED_CODE.GET_DATA_SUCCESS, []);
-        }
+        let finalData = data;
+        let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+        response(res, DEFINED_CODE.GET_DATA_SUCCESS, { usersList: realData, total: finalData.length, page: page });
+
       }).catch(err => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
   } else {
-    userModel.getClientBusinessUsers(account_status, page, take, queryName)
+    userModel.getClientBusinessUsers(account_status, queryName)
       .then(data => {
-        response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
+        let finalData = data;
+        let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+        response(res, DEFINED_CODE.GET_DATA_SUCCESS, { usersList: realData, total: finalData.length, page: page });
       }).catch(err => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
