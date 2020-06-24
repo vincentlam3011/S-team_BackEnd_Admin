@@ -49,7 +49,7 @@ router.get('/getTopicById/:id', (req, res, next) => {
         })
 })
 
-router.put('/removeTopicById/:id', (req, res, next) => {
+router.put('/setTopicStatusById/:id', (req, res, next) => {
     let id = req.params.id;
     topicModel.setTopicStatus(id)
         .then(result => {
