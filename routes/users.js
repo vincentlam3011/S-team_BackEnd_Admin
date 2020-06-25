@@ -13,9 +13,24 @@ router.get('/', function (req, res, next) {
   });
   userModel.getById(decodedPayload.id)
     .then(data => {
-      res.json(data);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
     }).catch(err => {
-      res.json(err);
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+});
+
+router.get('/getEmployeesList', function (req, res, next) {
+  let page = Number.parseInt(req.body.page) || 1;
+  let take = Number.parseInt(req.body.take) || 6;
+  let { queryName, isManager } = req.body;
+
+  userModel.getEmployees(isManager, queryName)
+    .then(data => {
+      let finalData = data;
+      let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { employeesList: realData, total: finalData.length, page: page });
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
     })
 });
 
@@ -96,6 +111,16 @@ router.delete('/deleteEmployee/:id', function (req, res, next) {
     }).catch(err => {
       response(res, DEFINED_CODE.GET_DATA_FAIL, err);
     })
+})
+
+router.get('/getEmployeeById/:id', (req, res, next) => {
+  let id = req.params.id;
+  userModel.getById(id)
+  .then(data => {
+    response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
+  }).catch(err => {
+    response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+  })
 })
 
 router.get('/getClientUserDetails/:id', (req, res, next) => {
