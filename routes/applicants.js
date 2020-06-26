@@ -4,7 +4,7 @@ var convertBlobB64 = require('../middleware/convertBlobB64');
 var { response, DEFINED_CODE } = require('../config/response');
 var applicantModel = require('../models/applicantModel');
 
-router.get('/getByJobId', (req, res, next) => {
+router.post('/getByJobId', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;

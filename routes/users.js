@@ -19,7 +19,7 @@ router.get('/', function (req, res, next) {
     })
 });
 
-router.get('/getEmployeesList', function (req, res, next) {
+router.post('/getEmployeesList', function (req, res, next) {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   let { queryName, isManager } = req.body;
@@ -86,25 +86,12 @@ router.delete('/deleteEmployee/:id', function (req, res, next) {
   userModel.getById(id_employee)
     .then(user => {
       if (user[0].id_user !== id_user) {
-        if (isMng === 2) {
-          userModel.deleteAnEmployee(id_employee)
-            .then(result => {
-              response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
-            }).catch(err => {
-              response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
-            })
-        } else {
-          if (user[0].isManager === 1) {
-            response(res, DEFINED_CODE.ACTIVATE_FAIL, `Cannot remove another admin if is not an executive!`);
-          } else {
-            userModel.deleteAnEmployee(id_employee)
-              .then(result => {
-                response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
-              }).catch(err => {
-                response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
-              })
-          }
-        }
+        userModel.deleteAnEmployee(id_employee)
+          .then(result => {
+            response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
+          }).catch(err => {
+            response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+          })
       } else {
         response(res, DEFINED_CODE.INTERACT_DATA_FAIL, `Cannot remove yourself`);
       }
@@ -116,11 +103,11 @@ router.delete('/deleteEmployee/:id', function (req, res, next) {
 router.get('/getEmployeeById/:id', (req, res, next) => {
   let id = req.params.id;
   userModel.getById(id)
-  .then(data => {
-    response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
-  }).catch(err => {
-    response(res, DEFINED_CODE.GET_DATA_FAIL, err);
-  })
+    .then(data => {
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
 })
 
 router.get('/getClientUserDetails/:id', (req, res, next) => {
@@ -179,7 +166,7 @@ router.put('/setClientUserStatus', (req, res, next) => {
     })
 })
 
-router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
+router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
   var { account_status, queryName } = req.body;
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;

@@ -4,7 +4,7 @@ const topicModel = require('../models/topicModel');
 const { response, DEFINED_CODE } = require('../config/response');
 var convertBlobB64 = require('../middleware/convertBlobB64');
 
-router.get('/getTopics', (req, res, next) => {
+router.post('/getTopics', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;

@@ -14,7 +14,7 @@ router.put('/setTagStatusById/:id', (req, res, next) => {
         })
 })
 
-router.get('/getTags', (req, res, next) => {
+router.post('/getTags', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;
