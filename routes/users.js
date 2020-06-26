@@ -154,7 +154,7 @@ router.put('/setClientUserStatus', (req, res, next) => {
     })
 })
 
-router.get('/getClientUsersList/:isBusinessUser', (req, res, next) => {
+router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
   var { account_status, queryName } = req.body;
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
