@@ -4,6 +4,7 @@ var jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 var bcrypt = require('bcrypt');
 const { response, DEFINED_CODE } = require('../config/response');
+const { result } = require('lodash');
 const saltRounds = 12;
 
 router.get('/', function (req, res, next) {
@@ -191,6 +192,91 @@ router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
   }
+})
+
+router.put('/updateProfile', (req, res, next) => {
+  var updates = [];
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  let id_user = decodedPayload.id;
+  var body = req.body;
+  for (var i in body) {
+    if (body[i]) {
+      updates.push({ field: i, value: `${body[i]}` });
+    }
+  };
+  userModel.updateEmployeeInfo(id_user, updates)
+    .then(data => {
+      response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, "Updated");
+    }).catch(err => {
+      response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+    })
+})
+
+router.put('/changePassword', (req, res, next) => {
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  var id_user = decodedPayload.id;
+  var { oldPassword, newPassword } = req.body;
+  if (newPassword == '' || newPassword == null || oldPassword == '' || oldPassword == null) {
+    return response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Nothing to change`);
+  }
+  userModel.getById(id_user)
+    .then(user => {
+      let password = user[0].password;
+      bcrypt.compare(oldPassword, password, (err, result) => {
+        if (err) {
+          response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Bcrypt error`);
+        }
+        if (result) {
+          bcrypt.hash(newPassword, saltRounds, (err, hash) => {
+            if (err) {
+              res.json(err);
+            } else {
+              var updates = [{ field: 'password', value: `${hash}` }];
+              userModel.updateEmployeeInfo(id_user, updates)
+                .then(data => {
+                  response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS);
+                }).catch(err => {
+                  response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
+                })
+            }
+          })
+        } else {
+          return response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Old password does not match`);
+        }
+      })
+    })
+})
+
+router.put('/resetPassword/:id', (req, res, next) => {
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  var isMng = decodedPayload.isManager;
+  let id_staff = req.params.id;
+  if (isMng == 0) {
+    return response(res, DEFINED_CODE.INTERACT_DATA_FAIL, `Cannot reset password if is not an admin!`);
+  }
+  let newPassword = 'admin123';
+  bcrypt.hash(newPassword, saltRounds, (err, hash) => {
+    if (err) {
+      response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Bcrypt error`);
+    } else {
+      var updates = [{ field: 'password', value: `${hash}` }];
+      userModel.updateEmployeeInfo(id_staff, updates)
+      .then(data => {
+        response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS, "Updated");
+      }).catch(err => {
+        response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
+      })
+    }
+  })
 })
 
 module.exports = router;
