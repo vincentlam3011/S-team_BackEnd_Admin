@@ -4,6 +4,7 @@ var jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 var bcrypt = require('bcrypt');
 const { response, DEFINED_CODE } = require('../config/response');
+const { result } = require('lodash');
 const saltRounds = 12;
 
 router.get('/', function (req, res, next) {
@@ -13,9 +14,24 @@ router.get('/', function (req, res, next) {
   });
   userModel.getById(decodedPayload.id)
     .then(data => {
-      res.json(data);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
     }).catch(err => {
-      res.json(err);
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+});
+
+router.post('/getEmployeesList', function (req, res, next) {
+  let page = Number.parseInt(req.body.page) || 1;
+  let take = Number.parseInt(req.body.take) || 6;
+  let { queryName, isManager } = req.body;
+
+  userModel.getEmployees(isManager, queryName)
+    .then(data => {
+      let finalData = data;
+      let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { employeesList: realData, total: finalData.length, page: page });
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
     })
 });
 
@@ -71,28 +87,25 @@ router.delete('/deleteEmployee/:id', function (req, res, next) {
   userModel.getById(id_employee)
     .then(user => {
       if (user[0].id_user !== id_user) {
-        if (isMng === 2) {
-          userModel.deleteAnEmployee(id_employee)
-            .then(result => {
-              response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
-            }).catch(err => {
-              response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
-            })
-        } else {
-          if (user[0].isManager === 1) {
-            response(res, DEFINED_CODE.ACTIVATE_FAIL, `Cannot remove another admin if is not an executive!`);
-          } else {
-            userModel.deleteAnEmployee(id_employee)
-              .then(result => {
-                response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
-              }).catch(err => {
-                response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
-              })
-          }
-        }
+        userModel.deleteAnEmployee(id_employee)
+          .then(result => {
+            response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Deleted employee ID ${id_employee}!`);
+          }).catch(err => {
+            response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+          })
       } else {
         response(res, DEFINED_CODE.INTERACT_DATA_FAIL, `Cannot remove yourself`);
       }
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+})
+
+router.get('/getEmployeeById/:id', (req, res, next) => {
+  let id = req.params.id;
+  userModel.getById(id)
+    .then(data => {
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
     }).catch(err => {
       response(res, DEFINED_CODE.GET_DATA_FAIL, err);
     })
@@ -179,6 +192,91 @@ router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
   }
+})
+
+router.put('/updateProfile', (req, res, next) => {
+  var updates = [];
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  let id_user = decodedPayload.id;
+  var body = req.body;
+  for (var i in body) {
+    if (body[i]) {
+      updates.push({ field: i, value: `${body[i]}` });
+    }
+  };
+  userModel.updateEmployeeInfo(id_user, updates)
+    .then(data => {
+      response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, "Updated");
+    }).catch(err => {
+      response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+    })
+})
+
+router.put('/changePassword', (req, res, next) => {
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  var id_user = decodedPayload.id;
+  var { oldPassword, newPassword } = req.body;
+  if (newPassword == '' || newPassword == null || oldPassword == '' || oldPassword == null) {
+    return response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Nothing to change`);
+  }
+  userModel.getById(id_user)
+    .then(user => {
+      let password = user[0].password;
+      bcrypt.compare(oldPassword, password, (err, result) => {
+        if (err) {
+          response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Bcrypt error`);
+        }
+        if (result) {
+          bcrypt.hash(newPassword, saltRounds, (err, hash) => {
+            if (err) {
+              res.json(err);
+            } else {
+              var updates = [{ field: 'password', value: `${hash}` }];
+              userModel.updateEmployeeInfo(id_user, updates)
+                .then(data => {
+                  response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS);
+                }).catch(err => {
+                  response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
+                })
+            }
+          })
+        } else {
+          return response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Old password does not match`);
+        }
+      })
+    })
+})
+
+router.put('/resetPassword/:id', (req, res, next) => {
+  var token = req.headers.authorization.slice(7);
+  var decodedPayload = jwt.decode(token, {
+    secret: 'S_Team',
+  });
+  var isMng = decodedPayload.isManager;
+  let id_staff = req.params.id;
+  if (isMng == 0) {
+    return response(res, DEFINED_CODE.INTERACT_DATA_FAIL, `Cannot reset password if is not an admin!`);
+  }
+  let newPassword = 'admin123';
+  bcrypt.hash(newPassword, saltRounds, (err, hash) => {
+    if (err) {
+      response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, `Bcrypt error`);
+    } else {
+      var updates = [{ field: 'password', value: `${hash}` }];
+      userModel.updateEmployeeInfo(id_staff, updates)
+      .then(data => {
+        response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS, "Updated");
+      }).catch(err => {
+        response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
+      })
+    }
+  })
 })
 
 module.exports = router;

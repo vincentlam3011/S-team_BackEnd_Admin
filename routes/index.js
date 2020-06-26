@@ -5,10 +5,11 @@ var jwt = require('jsonwebtoken');
 var passport = require('passport');
 
 var userModel = require('../models/userModel');
-const { json } = require('express');
+var jobModel = require('../models/jobModel');
 const saltRounds = 12;
 
 var { response, DEFINED_CODE } = require('../config/response');
+const { publicDecrypt } = require('crypto');
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -73,5 +74,14 @@ router.post('/login', (req, res, next) => {
 //       res.json(err);
 //     })
 // })
+
+router.get('/getStatuses', (req, res, next) => {
+  jobModel.getJobStatuses()
+  .then(data => {
+    response(res, DEFINED_CODE.GET_DATA_SUCCESS, data);
+  }).catch(err => {
+    response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+  })
+})
 
 module.exports = router;
