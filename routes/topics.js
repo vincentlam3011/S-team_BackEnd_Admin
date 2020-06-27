@@ -13,7 +13,8 @@ router.post('/getTopics', (req, res, next) => {
     topicModel.getJobTopics(queryName, status)
         .then(data => {
             let finalData = data;
-            if (isASC !== 1) {
+            console.log(isASC);
+            if (isASC != 1) {
                 finalData = finalData.reverse();
             }
             let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
@@ -68,13 +69,14 @@ router.put('/updateTopicById/:id', (req, res, next) => {
     var updates = [];
     var body = req.body;
     for (var i in body) {
-        if (body[i]) {
+        if (body[i] !== null && body[i] !== '') {
             if (i === 'img') {
                 body[i] = convertBlobB64.convertB64ToBlob(body[i]).toString('hex');
             }
             updates.push({ field: i, value: `${body[i]}` });
         }
     };
+    console.log(updates);
     let id_jobtopic = req.params.id;
     topicModel.updateJobTopic(id_jobtopic, updates)
         .then(result => {
@@ -100,4 +102,5 @@ router.post('/addNewTopic', (req, res, next) => {
             response(res, DEFINED_CODE.CREATE_DATA_FAIL, err);
         })
 })
+
 module.exports = router;

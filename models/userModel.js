@@ -24,7 +24,7 @@ module.exports = {
             var companyQuery = `select * from companies where id_user = ${id};`;
             var ratingAsEmployeeQuery = `select avg(ac.rating_fromEmployer) as rating_as_employee from accepted as ac, applicants as a where a.id_user = ${id} and ac.id_applicant = a.id_applicant;`
             var ratingAsEmployerQeury = `select avg(ac.rating_fromEmployee) as rating_as_employer from accepted as ac, applicants as a, jobs as j, users as u
-            where ac.id_job = a.id_job and a.id_job = j.id_job and j.employer =id_user and u.id_user = ${id};`
+                                         where ac.id_job = a.id_job and a.id_job = j.id_job and j.employer = u.id_user and u.id_user = ${id};`
             return db.query(userQuery + ' ' + companyQuery + ' ' + ratingAsEmployeeQuery + ' ' + ratingAsEmployerQeury);
         }
     },

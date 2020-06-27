@@ -17,7 +17,7 @@ router.put('/setTagStatusById/:id', (req, res, next) => {
 router.post('/getTags', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
-    let isASC = Number.parseInt(req.body.isASC) || 1;
+    let isASC = Number.parseInt(req.body.isASC);
     let queryName = req.body.queryName || '';
     let status = req.body.status || 1;
     tagModel.getTags(queryName, status)
@@ -27,7 +27,7 @@ router.post('/getTags', (req, res, next) => {
                 finalData = finalData.reverse();
             }
             let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
-            response(res, DEFINED_CODE.GET_DATA_SUCCESS, { topicsList: realData, total: finalData.length, page: page })
+            response(res, DEFINED_CODE.GET_DATA_SUCCESS, { tagsList: realData, total: finalData.length, page: page })
         }).catch(err => {
             response(res, DEFINED_CODE.GET_DATA_FAIL, err);
         })
@@ -62,7 +62,7 @@ router.put('/updateTagById/:id', (req, res, next) => {
     var updates = [];
     var body = req.body;
     for (var i in body) {
-        if (body[i]) {
+        if (body[i] !== '' && body[i] !== null) {
             updates.push({ field: i, value: `${body[i]}` });
         }
     };

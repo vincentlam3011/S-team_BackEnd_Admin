@@ -18,7 +18,7 @@ module.exports = {
         if (status == 0 || status == 1) {
             selectQuery += `and status = ${status} `;
         }
-        selectQuery += `order by name asc;`
+        selectQuery += `order by id_tag asc;`
         return db.query(selectQuery);
     },
     getTagById: (id) => {

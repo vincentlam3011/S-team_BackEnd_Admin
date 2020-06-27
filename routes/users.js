@@ -203,7 +203,7 @@ router.put('/updateProfile', (req, res, next) => {
   let id_user = decodedPayload.id;
   var body = req.body;
   for (var i in body) {
-    if (body[i]) {
+    if (body[i] !== null && body[i] !== '') {
       updates.push({ field: i, value: `${body[i]}` });
     }
   };
