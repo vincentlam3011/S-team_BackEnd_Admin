@@ -11,6 +11,7 @@ var topicsRouter = require('./routes/topics');
 var jobsRouter = require('./routes/jobs');
 var applicantsRouter = require('./routes/applicants');
 var tagsRouter = require('./routes/tags');
+var reportsRouter = require('./routes/reports');
 
 var app = express();
 var bodyParser = require('body-parser');
@@ -47,6 +48,7 @@ app.use('/topics', passportStrategy, topicsRouter );
 app.use('/jobs', passportStrategy, jobsRouter );
 app.use('/applicants', passportStrategy, applicantsRouter );
 app.use('/tags', passportStrategy, tagsRouter );
+app.use('/reports', passportStrategy, reportsRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
