@@ -81,7 +81,13 @@ module.exports = {
     setJobStatus: (id, status) => {
         return db.query(`update jobs set id_status = ${status} where id_job = ${id}`);
     },
+    deleteJobById: (id) => {
+        return db.query(`delete from jobs where id_job = ${id}`);
+    },
     getJobStatuses: () => {
         return db.query(`select * from statuses;`);
+    },
+    getJobStatusById: (id) => {
+        return db.query(`select id_status from jobs where id_job = ${id};`);
     }
 }

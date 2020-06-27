@@ -85,6 +85,7 @@ router.post('/getJobsList', function (req, res, next) {
                 id_status: value[0].id_status,
                 img: value[0].img,
                 tags: tags_temp[0] === null ? [] : tags_temp,
+                topic_name: value[0].topic_name,
             }
             finalData.push(temp);
         })
@@ -323,11 +324,36 @@ router.post('/getJobsByApplicant/:id', (req, res, next) => {
         })
 })
 
-router.put('/setJobStatus', (req, res, next) => {
-    var { id_job, id_status } = req.body;
-    jobModel.setJobStatus(id_job, id_status)
-    .then(data => {
-        response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Status changed to ${id_status}`);
+router.put('/setJobStatusById', (req, res, next) => {
+    let id = Number.parseInt(req.body.id_job);
+    let status = Number.parseInt(req.body.id_status);
+    jobModel.getJobStatusById(id)
+        .then(data => {
+            let curStt = data[0].id_status;
+            if (status === -1) {
+                if (curStt === 1) {
+                    jobModel.deleteJobById(id)
+                        .then(result => {
+                            response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job deleted (physically)!`);
+                        }).catch(err => {
+                            response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+                        })
+                } else {
+                    jobModel.setJobStatus(id, status)
+                        .then(result => {
+                            response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job ID ${id} - status changed to ${status}`);
+                        }).catch(err => {
+                            response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+                        })
+                }
+            } else {
+                jobModel.setJobStatus(id, status)
+                    .then(result => {
+                        response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job ID ${id} - status changed to ${status}`);
+                    }).catch(err => {
+                        response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+                    })
+            }
     }).catch(err => {
         response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
     })
