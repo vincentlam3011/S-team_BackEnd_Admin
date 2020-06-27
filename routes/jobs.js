@@ -67,6 +67,7 @@ router.post('/getJobsList', function (req, res, next) {
                 title: value[0].title,
                 salary: value[0].salary,
                 job_topic: value[0].job_topic,
+                topic_name: value[0].topic_name,
                 province: value[0].province,
                 district: value[0].district,
                 address: value[0].address,
@@ -181,7 +182,6 @@ router.get('/getJobById/:id', function (req, res, next) {
             deadline: jobInfo.deadline,
             tags: tags_temp,
             imgs: imgs_temp,
-            dealers: data[2],
         }
         response(res, DEFINED_CODE.GET_DATA_SUCCESS, finalData);
     }).catch(err => {
@@ -256,4 +256,81 @@ router.post('/getJobsByEmployer/:id', (req, res, next) => {
         })
 })
 
+router.post('/getJobsByApplicant/:id', (req, res, next) => {
+    let id = req.params.id;
+    let queryName = req.body.queryName || '';
+    let status = req.body.status || -2;
+    let page = Number.parseInt(req.body.page) || 1;
+    let take = Number.parseInt(req.body.take) || 6;
+    let isASC = Number.parseInt(req.body.isASC) || 1;
+    jobModel.getJobsListByApplicant(id, queryName, status)
+        .then(data => {
+            const jobs = _.groupBy(data, "id_job");
+            var finalData = [];
+            _.forEach(jobs, (value, key) => {
+                let tags_temp = [];
+                const tags = _.map(value, item => {
+                    const { id_tag, tag_name } = item;
+                    if (id_tag === null || tag_name === null) {
+                        // return null;
+                    }
+                    else {
+                        tags_temp.push({ id_tag, tag_name });
+                    }
+                })
+                const temp = {
+                    id_job: value[0].id_job,
+                    title: value[0].title,
+                    salary: value[0].salary,
+                    job_topic: value[0].job_topic,
+                    province: value[0].province,
+                    district: value[0].district,
+                    address: value[0].address,
+                    lat: value[0].lat,
+                    lng: value[0].lng,
+                    description: value[0].description,
+                    post_date: value[0].post_date,
+                    expire_date: value[0].expire_date,
+                    dealable: value[0].dealable,
+                    job_type: value[0].job_type,
+                    isOnline: value[0].isOnline,
+                    isCompany: value[0].isCompany,
+                    vacancy: value[0].vacancy,
+                    id_status: value[0].id_status,
+                    img: value[0].img,
+                    tags: tags_temp[0] === null ? [] : tags_temp,
+                }
+                finalData.push(temp);
+            })
+            // Đảo ngược chuỗi vì id_job thêm sau cũng là mới nhất
+            if (isASC !== 1) {
+                finalData = finalData.reverse();
+            }
+            let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+            if (realData.length > 0) {
+                realData.forEach(element => {
+                    if (element.img) {
+                        let buffer = new Buffer(element.img);
+                        let bufferBase64 = buffer.toString('base64');
+                        element.img = bufferBase64;
+                    }
+                });
+
+            }
+            response(res, DEFINED_CODE.GET_DATA_SUCCESS, { jobsList: realData, total: finalData.length, page: page });
+        }).catch(err => {
+            response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+        })
+})
+
+router.put('/setJobStatus', (req, res, next) => {
+    var { id_job, id_status } = req.body;
+    jobModel.setJobStatus(id_job, id_status)
+    .then(data => {
+        response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Status changed to ${id_status}`);
+    }).catch(err => {
+        response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
+    })
+})
+  
 module.exports = router;

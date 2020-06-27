@@ -23,10 +23,10 @@ module.exports = {
         let today = new Date();
         let todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
         let finalQuery = `
-        select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district${multipleTags.length > 0 ? ', matches.relevance as relevance' : ''}
-        from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as u, provinces as p, districts as d
+        select j.*, jri.img, jt.id_tag, job_topics.name as topic_name, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district${multipleTags.length > 0 ? ', matches.relevance as relevance' : ''}
+        from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as u, provinces as p, districts as d, job_topics
         ${multipleTags.length > 0 ? ',(SELECT j2.id_job as id,count(j2.id_job) as relevance FROM jobs as j2, jobs_tags as jt2 WHERE j2.id_job = jt2.id_job AND jt2.id_tag IN (' + tags + ') GROUP BY j2.id_job) AS matches' : ''}
-        ${queryArr.length > 0 ? ('where ' + query + ' and j.area_province = p.id_province and j.area_district = d.id_district') : 'where j.area_province = p.id_province and j.area_district = d.id_district'} ${multipleTags.length > 0 ? ' and matches.id = j.id_job' : ''}
+        ${queryArr.length > 0 ? ('where ' + query + ' and j.area_province = p.id_province and j.area_district = d.id_district and j.job_topic = job_topics.id_jobtopic') : 'where j.area_province = p.id_province and j.area_district = d.id_district and j.job_topic = job_topics.id_jobtopic'} ${multipleTags.length > 0 ? ' and matches.id = j.id_job' : ''}
         group by j.id_job, jt.id_tag order by j.id_job asc`;
         // console.log(finalQuery);
         return db.query(finalQuery);
@@ -48,14 +48,7 @@ module.exports = {
             on  j.id_job= jri.id_job
             where j.id_job=${id};`
 
-        let query3 = `select  distinct  j.id_job,app.proposed_price,u.fullname,u.id_user,u.dial,u.email
-            from jobs as j 
-            left join applicants as app
-            on  j.id_job= app.id_job
-            join users as u on u.id_user = app.id_user
-            where j.id_job=${id};`
-
-        return db.query(query1 + ` ` + query2 + ` ` + query3)
+        return db.query(query1 + ` ` + query2 )
     },
     getJobsListByEmployer: (id, queryName, status) => {
         if (!queryName.replace(/\s/g, '').length) {
@@ -65,6 +58,20 @@ module.exports = {
                     from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
                     u, provinces as p, districts as d
                     where j.area_province = p.id_province and j.area_district = d.id_district and j.employer = u.id_user and u.id_user = ${id} and j.title like '%${queryName}%' `;
+        if (status >= -1 && status <= 4) {
+            query += ` and j.id_status = ${status} `;
+        }
+        query += `group by j.id_job, jt.id_tag order by j.id_job asc;`
+        return db.query(query);
+    },
+    getJobsListByApplicant: (id, queryName, status) => {
+        if (!queryName.replace(/\s/g, '').length) {
+            queryName = '';
+        }
+        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district
+                    from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
+                    u, provinces as p, districts as d, applicants as a
+                    where j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} and j.title like '%${queryName}%' `;
         if (status >= -1 && status <= 4) {
             query += ` and j.id_status = ${status} `;
         }
