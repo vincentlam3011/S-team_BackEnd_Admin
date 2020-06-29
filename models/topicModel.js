@@ -1,15 +1,24 @@
 var db = require('../utils/db');
 
 module.exports = {
-    getJobTopics: (queryName, status) => {
+    getJobTopics: (queryName, status, isFulltext) => {
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
-        let selectQuery = `select id_jobtopic, name, status, count from job_topics where name like '%${queryName}%' `;
+        let selectQuery = ``;
+        if (isFulltext) {
+            selectQuery = `select id_jobtopic, name, status, count from job_topics where match(name) against('${queryName}') `;
+        } else {
+            selectQuery = `select id_jobtopic, name, status, count from job_topics where name like '%${queryName}%' `;
+        }
         if (status == 0 || status == 1) {
             selectQuery += `and status = ${status} `;
         }
-        selectQuery += `order by count asc;`
+        if (isFulltext) {
+            selectQuery += `order by (match(name) against('${queryName}')) desc;`
+        } else {
+            selectQuery += `order by count asc;`
+        }
         return db.query(selectQuery);
     },
     getJobTopicById: (id) => {

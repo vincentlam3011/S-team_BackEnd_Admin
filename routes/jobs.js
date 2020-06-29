@@ -3,6 +3,7 @@ var router = express.Router();
 const jobModel = require('../models/jobModel');
 const { response, DEFINED_CODE } = require('../config/response');
 var _ = require('lodash');
+const { query } = require('express');
 
 router.post('/getJobsList', function (req, res, next) {
     let page = Number.parseInt(req.body.page) || 1;
@@ -12,10 +13,26 @@ router.post('/getJobsList', function (req, res, next) {
     let queryArr = [];
     let multiTags = [];
     let query = req.body.query;
+    let isFulltext = false;
+    let count = 0;
     for (let i in query) {
         if (query[i]) {
             if (i === 'title') {
-                queryArr.push({ field: i, text: `LIKE '%${query[i]}%'` });
+                let searchTerm = query[i];
+                searchTerm = searchTerm.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ').replace(/\s+/g, ' ');
+                if (searchTerm.length >= 3) {
+                    let words = searchTerm.split(" ");
+                    count = words.length;
+                    let matchValue = '';
+                    isFulltext = true;
+                    for (let w of words) {
+                        matchValue += w + " ";
+                    }
+                    queryArr.push({ field: i, text: `match(title) against('${matchValue}')` });
+                } else {
+                    queryArr.push({ field: i, text: `LIKE '%${query[i]}%'` });
+                }
+                // queryArr.push({ field: i, text: `LIKE '%${query[i]}%'` });
             }
             else if (i === 'expire_date') {
                 queryArr.push({ field: i, text: `= '${query[i]}'` });
@@ -43,10 +60,9 @@ router.post('/getJobsList', function (req, res, next) {
 
     console.log('queryArr:', queryArr)
     console.log('multiTags:', multiTags)
-    jobModel.getJobsList(queryArr, multiTags).then(data => {
+    jobModel.getJobsList(queryArr, multiTags, isFulltext, count).then(data => {
         const jobs = _.groupBy(data, "id_job");
         var finalData = [];
-        console.log(queryArr)
         _.forEach(jobs, (value, key) => {
             let tags_temp = [];
             const tags = _.map(value, item => {
@@ -197,7 +213,22 @@ router.post('/getJobsByEmployer/:id', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;
-    jobModel.getJobsListByEmployer(id, queryName, status)
+    let count = 0;
+    queryName = queryName.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ').replace(/\s+/g, ' ');
+    let isFulltext = (queryName.length >= 3) ? true : false;
+    let matchValue = '';
+    if (isFulltext) {
+        let words = queryName.split(" ");
+        count = words.length;
+        isFulltext = true;
+        for (let w of words) {
+            matchValue += w + " ";
+        }
+        queryName = matchValue;
+    }
+
+    // return res.json(matchValue);
+    jobModel.getJobsListByEmployer(id, queryName, status, isFulltext, count)
         .then(data => {
             const jobs = _.groupBy(data, "id_job");
             var finalData = [];
@@ -264,7 +295,20 @@ router.post('/getJobsByApplicant/:id', (req, res, next) => {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;
-    jobModel.getJobsListByApplicant(id, queryName, status)
+    let count = 0;
+    queryName = queryName.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ').replace(/\s+/g, ' ');
+    let isFulltext = (queryName.length >= 3) ? true : false;
+    let matchValue = '';
+    if (isFulltext) {
+        let words = queryName.split(" ");
+        count = words.length;
+        isFulltext = true;
+        for (let w of words) {
+            matchValue += w + " ";
+        }
+        queryName = matchValue;
+    }
+    jobModel.getJobsListByApplicant(id, queryName, status, isFulltext, count)
         .then(data => {
             const jobs = _.groupBy(data, "id_job");
             var finalData = [];
@@ -354,9 +398,9 @@ router.put('/setJobStatusById', (req, res, next) => {
                         response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
                     })
             }
-    }).catch(err => {
-        response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
-    })
+        }).catch(err => {
+            response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
+        })
 })
-  
+
 module.exports = router;

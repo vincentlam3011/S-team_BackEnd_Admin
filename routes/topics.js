@@ -9,8 +9,21 @@ router.post('/getTopics', (req, res, next) => {
     let take = Number.parseInt(req.body.take) || 6;
     let isASC = Number.parseInt(req.body.isASC) || 1;
     let queryName = req.body.queryName || '';
-    let status = req.body.status || 1;
-    topicModel.getJobTopics(queryName, status)
+    let status = req.body.status || 2;
+    let count = 0;
+    queryName = queryName.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ').replace(/\s+/g, ' ');
+    let isFulltext = (queryName.length >= 3) ? true : false;
+    let matchValue = '';
+    if (isFulltext) {
+        let words = queryName.split(" ");
+        count = words.length;
+        isFulltext = true;
+        for (let w of words) {
+            matchValue += w + " ";
+        }
+        queryName = matchValue;
+    }
+    topicModel.getJobTopics(queryName, status, isFulltext)
         .then(data => {
             let finalData = data;
             console.log(isASC);

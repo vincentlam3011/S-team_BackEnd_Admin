@@ -10,15 +10,24 @@ module.exports = {
             return db.query(setStatusQuery);
         }
     },
-    getTags: (queryName, status) => {
+    getTags: (queryName, status, isFulltext) => {
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
-        let selectQuery = `select id_tag, name, status from tags where name like '%${queryName}%' `;
+        let selectQuery = ``;
+        if (isFulltext) {
+            selectQuery = `select id_tag, name, status from tags where match(name) against('${queryName}') `;
+        } else {
+            selectQuery = `select id_tag, name, status from tags where name like '%${queryName}%' `;
+        }
         if (status == 0 || status == 1) {
             selectQuery += `and status = ${status} `;
         }
-        selectQuery += `order by id_tag asc;`
+        if (isFulltext) {
+            selectQuery += `order by (match(name) against('${queryName}')) desc;`
+        } else {
+            selectQuery += `order by id_tag asc;`
+        }
         return db.query(selectQuery);
     },
     getTagById: (id) => {
