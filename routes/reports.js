@@ -8,8 +8,15 @@ router.post('/getReportsList', (req, res, next) => {
     let take = Number.parseInt(req.body.take);
     let status = Number.parseInt(req.body.status);
     let queryName = req.body.queryName;
+    let queryNameCount = queryName.trim().split(/\s+/).length || 0;
     reportModel.getReportsList(status, queryName)
         .then(data => {
+            if(queryName.length > 0) {
+                data = data.filter((e) => {
+                    return Math.round(e.fullnameRanking)/queryNameCount > 0.5;
+                })
+            }
+
             let finalData = data.slice(take*(page - 1), take*page);
             response(res, DEFINED_CODE.GET_DATA_SUCCESS,{list: finalData, total: data.length, page: page});
         }).catch(err => {

@@ -1,14 +1,30 @@
 var db = require('../utils/db');
 var convertBlobB64 = require('../middleware/convertBlobB64');
 module.exports = {
-    getJobsList: (queryArr, multipleTags) => {
+    getJobsList: (queryArr, multipleTags, queryName, queryTitle) => {
         let query = '', count = 0, tags = '';
 
         for (let e of queryArr) {
             if (count !== 0) {
                 query += ' and';
             }
-            query += ` j.${e.field} ${e.text}`;
+            query += e;
+            count++;
+        }
+
+        if(queryName !== '') {
+            if(count !== 0) {
+                query += ' and';
+            }
+            query += ` j.employer = u.id_user and match(u.fullname) against('${queryName}')`;
+            count++;
+        }
+
+        if(queryTitle !== '') {
+            if(count !== 0) {
+                query += ' and';
+            }
+            query += ` match(j.title) against('${queryTitle}')`;
             count++;
         }
 
@@ -20,15 +36,14 @@ module.exports = {
                 }
             })
         }
+
         let today = new Date();
         let todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
         let finalQuery = `
-        select j.*, jri.img, jt.id_tag, job_topics.name as topic_name, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district${multipleTags.length > 0 ? ', matches.relevance as relevance' : ''}
-        from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as u, provinces as p, districts as d, job_topics
-        ${multipleTags.length > 0 ? ',(SELECT j2.id_job as id,count(j2.id_job) as relevance FROM jobs as j2, jobs_tags as jt2 WHERE j2.id_job = jt2.id_job AND jt2.id_tag IN (' + tags + ') GROUP BY j2.id_job) AS matches' : ''}
-        ${queryArr.length > 0 ? ('where ' + query + ' and j.area_province = p.id_province and j.area_district = d.id_district and j.job_topic = job_topics.id_jobtopic') : 'where j.area_province = p.id_province and j.area_district = d.id_district and j.job_topic = job_topics.id_jobtopic'} ${multipleTags.length > 0 ? ' and matches.id = j.id_job' : ''}
-        group by j.id_job, jt.id_tag order by j.id_job asc`;
-        // console.log(finalQuery);
+        select j.*, t.name as topic_name, p.name as province, d.name as district${queryName !== '' ? ', match(u.fullname) against("'+queryName+'") as employerRanking' : ''}${queryTitle !== '' ? ', match(j.title) against("'+queryTitle+'") as titleRanking' : ''}
+        from jobs as j , users as u, provinces as p, districts as d, job_topics as t        
+        ${count > 0 ? ('where ' + query + ' and t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district') : 'where t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district'}
+        group by j.id_job order by j.id_job asc`;
         return db.query(finalQuery);
     },
     getJobById: (id) => {
@@ -54,10 +69,10 @@ module.exports = {
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
-        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district
+        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district, match(j.title) against ('${queryName}') as titleRanking
                     from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
                     u, provinces as p, districts as d
-                    where j.area_province = p.id_province and j.area_district = d.id_district and j.employer = u.id_user and u.id_user = ${id} and j.title like '%${queryName}%' `;
+                    where j.area_province = p.id_province and j.area_district = d.id_district and j.employer = u.id_user and u.id_user = ${id} and match(j.title) against ('${queryName}') `;
         if (status >= -1 && status <= 4) {
             query += ` and j.id_status = ${status} `;
         }
@@ -68,10 +83,10 @@ module.exports = {
         if (!queryName.replace(/\s/g, '').length) {
             queryName = '';
         }
-        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district
+        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district, match(j.title) against ('${queryName}') as titleRanking
                     from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
                     u, provinces as p, districts as d, applicants as a
-                    where j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} and j.title like '%${queryName}%' `;
+                    where j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} and match(j.title) against ('${queryName}') `;
         if (status >= -1 && status <= 4) {
             query += ` and j.id_status = ${status} `;
         }

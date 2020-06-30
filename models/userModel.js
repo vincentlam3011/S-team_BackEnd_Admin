@@ -11,7 +11,7 @@ module.exports = {
         if (isManager >= 0 && isManager <= 1)
             return db.query(`select` + queryColumns + `from employees where isManager = ${isManager} and (fullname like '%${queryName}%' or username like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from employees where (fullname like '%${queryName}%' or username like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from employees where (match (fullname) against ('${queryName}') or username like '%${queryName}%');`);
     },
     getByUsername: (username) => {
         return db.query(`select * from employees where username = '${username}'`);
@@ -47,9 +47,9 @@ module.exports = {
             queryName = '';
         }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
     },
     getClientBusinessUsers: (account_status, queryName) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity, c.company_name, c.position `;
@@ -57,9 +57,9 @@ module.exports = {
             queryName = '';
         }
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u, companies as c where account_status = ${account_status} and c.id_user = u.id_user and isBusinessUser = 1 and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u, companies as c where account_status = ${account_status} and c.id_user = u.id_user and isBusinessUser = 1 and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u, companies as c where isBusinessUser = 1 and c.id_user = u.id_user and (fullname like '%${queryName}%' or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u, companies as c where isBusinessUser = 1 and c.id_user = u.id_user and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
     },
     deleteAnEmployee: (id_user) => {
         return db.query(`delete from employees where id_user = ${id_user}`);

@@ -24,10 +24,12 @@ router.post('/getEmployeesList', function (req, res, next) {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   let { queryName, isManager } = req.body;
+  
 
   userModel.getEmployees(isManager, queryName)
     .then(data => {
       let finalData = data;
+
       let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
       response(res, DEFINED_CODE.GET_DATA_SUCCESS, { employeesList: realData, total: finalData.length, page: page });
     }).catch(err => {
@@ -172,10 +174,16 @@ router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   var isBusinessUser = req.params.isBusinessUser;
+
+  let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+  
   if (isBusinessUser == 0) {
     userModel.getClientPersonalUsers(account_status, queryName)
       .then(data => {
         let finalData = data;
+
+        
+
         let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
         response(res, DEFINED_CODE.GET_DATA_SUCCESS, { usersList: realData, total: finalData.length, page: page });
 

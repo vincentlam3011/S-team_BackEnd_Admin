@@ -6,13 +6,13 @@ module.exports = {
             return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`);
         }
         else if(status === 3 && queryName !== '') {
-            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where u1.fullname LIKE '%${queryName}%' and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
+            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name, match(u1.fullname) against('${queryName}') as fullnameRanking from reports as r, users as u1, users as u2 where match(u1.fullname) against('${queryName}') and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
         }
         else if(status !== 3 && queryName === '') {
             return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where r.status = ${status} and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
         }
         else {
-            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where u1.fullname LIKE '%${queryName}%' and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 and r.status = ${status} order by report_date desc`)
+            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name, match(u1.fullname) against('${queryName}') as fullnameRanking from reports as r, users as u1, users as u2 where match(u1.fullname) against('${queryName}') and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 and r.status = ${status} order by report_date desc`)
         }
     },
     setReportStatus: (id_report, status, solution) => {
