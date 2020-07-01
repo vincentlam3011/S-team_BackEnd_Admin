@@ -44,15 +44,6 @@ module.exports = {
             count++;
         }
 
-        if (multipleTags.length > 0) {
-            tags += multipleTags[0];
-            multipleTags.forEach((e, i) => {
-                if (i !== 0) {
-                    tags += `, ${e}`;
-                }
-            })
-        }
-
         let today = new Date();
         let todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
         let finalQuery = `
