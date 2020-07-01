@@ -37,16 +37,13 @@ router.post('/getJobsList', function (req, res, next) {
             else if (i === 'employer') {
                 queryEmployer = query[i];
             }
-            else if (i === 'tags') {
-                multiTags = query[i];
-            }
             else {
                 queryArr.push(` j.${i} = ${query[i]} `);
             }
         }
     };
 
-    jobModel.getJobsList(queryArr, multiTags, queryEmployer, queryTitle).then(data => {        
+    jobModel.getJobsList(queryArr, queryEmployer, queryTitle).then(data => {        
         var finalData = data;
 
         // Đảo ngược chuỗi vì id_job thêm sau cũng là mới nhất

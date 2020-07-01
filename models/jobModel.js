@@ -1,7 +1,7 @@
 var db = require('../utils/db');
 var convertBlobB64 = require('../middleware/convertBlobB64');
 module.exports = {
-    getJobsList: (queryArr, multipleTags, queryName, queryTitle) => {
+    getJobsList: (queryArr, queryName, queryTitle) => {
         let query = '', count = 0, tags = '';
 
         for (let e of queryArr) {
@@ -93,7 +93,7 @@ module.exports = {
         query += `order by j.id_job asc;`
         return db.query(query);
     },
-    getJobsListByApplicant: (id, queryName, status, isFulltext, wordsCount) => {
+    getJobsListByApplicant: (id, queryName, status) => {
         let query = `select j.*, t.name as topic_name, p.name as province, d.name as district
                     from jobs as j, job_topics as t, users as u, provinces as p, districts as d, applicants as a
                     where j.job_topic = t.id_jobtopic and j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} `;
