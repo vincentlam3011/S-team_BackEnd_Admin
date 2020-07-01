@@ -25,11 +25,11 @@ router.post('/getEmployeesList', function (req, res, next) {
   let take = Number.parseInt(req.body.take) || 6;
   let { queryName, isManager } = req.body;
   
+  let queryNameCount = queryName.trim().split(/\s+/).length || 0;
 
-  userModel.getEmployees(isManager, queryName)
+  userModel.getEmployees(isManager, queryName, queryNameCount)
     .then(data => {
       let finalData = data;
-
       let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
       response(res, DEFINED_CODE.GET_DATA_SUCCESS, { employeesList: realData, total: finalData.length, page: page });
     }).catch(err => {
@@ -170,20 +170,18 @@ router.put('/setClientUserStatus', (req, res, next) => {
 })
 
 router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
-  var { account_status, queryName } = req.body;
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   var isBusinessUser = req.params.isBusinessUser;
-
-  let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+  let queryName = req.body.queryName || '';
+  let account_status = req.body.account_status || -2;
   
+  let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+
   if (isBusinessUser == 0) {
-    userModel.getClientPersonalUsers(account_status, queryName)
+    userModel.getClientPersonalUsers(account_status, queryName, queryNameCount)
       .then(data => {
         let finalData = data;
-
-        
-
         let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
         response(res, DEFINED_CODE.GET_DATA_SUCCESS, { usersList: realData, total: finalData.length, page: page });
 
@@ -191,7 +189,7 @@ router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
         response(res, DEFINED_CODE.GET_DATA_FAIL, err);
       })
   } else {
-    userModel.getClientBusinessUsers(account_status, queryName)
+    userModel.getClientBusinessUsers(account_status, queryName, queryNameCount)
       .then(data => {
         let finalData = data;
         let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
@@ -278,11 +276,11 @@ router.put('/resetPassword/:id', (req, res, next) => {
     } else {
       var updates = [{ field: 'password', value: `${hash}` }];
       userModel.updateEmployeeInfo(id_staff, updates)
-      .then(data => {
-        response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS, "Updated");
-      }).catch(err => {
-        response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
-      })
+        .then(data => {
+          response(res, DEFINED_CODE.CHANGE_PASSWORD_SUCCESS, "Updated");
+        }).catch(err => {
+          response(res, DEFINED_CODE.CHANGE_PASSWORD_FAIL, err);
+        })
     }
   })
 })

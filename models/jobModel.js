@@ -12,19 +12,35 @@ module.exports = {
             count++;
         }
 
-        if(queryName !== '') {
-            if(count !== 0) {
+        if (queryName.length > 0) {
+            if (count !== 0) {
                 query += ' and';
             }
-            query += ` j.employer = u.id_user and match(u.fullname) against('${queryName}')`;
+
+            if (queryName.length > 3) {
+                let queryEmployerCount = queryName.trim().split(/\s+/).length || 0;
+                query += ` j.employer = u.id_user and match(u.fullname) against('${queryName}') > ${queryEmployerCount / 2} `;
+            }
+            else {
+                query += ` j.employer = u.id_user and u.fullname LIKE '%${queryName}%' `;
+            }
+
             count++;
         }
 
-        if(queryTitle !== '') {
-            if(count !== 0) {
+        if (queryTitle.length > 0) {
+            if (count !== 0) {
                 query += ' and';
             }
-            query += ` match(j.title) against('${queryTitle}')`;
+
+            if (queryTitle.length > 3) {
+                let queryTitleCount = queryTitle.trim().split(/\s+/).length || 0;
+                query += ` round(match(j.title) against('${queryTitle}')) > ${queryTitleCount / 2} `;
+            }
+            else {
+                query += ` j.title LIKE '%${queryTitle}%' `;
+            }
+
             count++;
         }
 
@@ -40,7 +56,7 @@ module.exports = {
         let today = new Date();
         let todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
         let finalQuery = `
-        select j.*, t.name as topic_name, p.name as province, d.name as district${queryName !== '' ? ', match(u.fullname) against("'+queryName+'") as employerRanking' : ''}${queryTitle !== '' ? ', match(j.title) against("'+queryTitle+'") as titleRanking' : ''}
+        select j.*, t.name as topic_name, p.name as province, d.name as district
         from jobs as j , users as u, provinces as p, districts as d, job_topics as t        
         ${count > 0 ? ('where ' + query + ' and t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district') : 'where t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district'}
         group by j.id_job order by j.id_job asc`;
@@ -63,33 +79,47 @@ module.exports = {
             on  j.id_job= jri.id_job
             where j.id_job=${id};`
 
-        return db.query(query1 + ` ` + query2 )
+        return db.query(query1 + ` ` + query2)
     },
     getJobsListByEmployer: (id, queryName, status) => {
-        if (!queryName.replace(/\s/g, '').length) {
-            queryName = '';
-        }
-        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district, match(j.title) against ('${queryName}') as titleRanking
-                    from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
-                    u, provinces as p, districts as d
-                    where j.area_province = p.id_province and j.area_district = d.id_district and j.employer = u.id_user and u.id_user = ${id} and match(j.title) against ('${queryName}') `;
+
+        let query = `select j.*,t.name as topic_name, p.name as province, d.name as district
+                    from jobs as j, users as u, provinces as p, districts as d, job_topics as t
+                    where j.job_topic = t.id_jobtopic and j.area_province = p.id_province and j.area_district = d.id_district and j.employer = u.id_user and u.id_user = ${id} `;
         if (status >= -1 && status <= 4) {
             query += ` and j.id_status = ${status} `;
         }
+
+        if (queryName.length > 0) {
+            if (queryName.length > 3) {
+                let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+                query += ` and round(match(j.title) against('${queryName}')) > ${queryNameCount / 2} `
+            } else {
+                query += ` and j.title like '%${queryName}%' `
+            }
+        }
+
         query += `group by j.id_job, jt.id_tag order by j.id_job asc;`
         return db.query(query);
     },
-    getJobsListByApplicant: (id, queryName, status) => {
-        if (!queryName.replace(/\s/g, '').length) {
-            queryName = '';
-        }
-        let query = `select j.*, jri.img, jt.id_tag, t.name as tag_name, t.status as tag_status, p.name as province, d.name as district, match(j.title) against ('${queryName}') as titleRanking
-                    from (((jobs as j left join job_related_images as jri on j.id_job = jri.id_job) left join jobs_tags as jt on j.id_job = jt.id_job) left join tags as t on t.id_tag = jt.id_tag), users as 
-                    u, provinces as p, districts as d, applicants as a
-                    where j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} and match(j.title) against ('${queryName}') `;
+    getJobsListByApplicant: (id, queryName, status, isFulltext, wordsCount) => {
+        let query = `select j.*, t.name as topic_name, p.name as province, d.name as district
+                    from jobs as j, job_topics as t, users as u, provinces as p, districts as d, applicants as a
+                    where j.job_topic = t.id_jobtopic and j.area_province = p.id_province and j.area_district = d.id_district and j.id_job = a.id_job and a.id_user = u.id_user and u.id_user = ${id} `;
+
         if (status >= -1 && status <= 4) {
             query += ` and j.id_status = ${status} `;
         }
+
+        if (queryName.length > 0) {
+            if (queryName.length > 3) {
+                let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+                query += ` and round(match(j.title) against('${queryName}')) > ${queryNameCount / 2} `
+            } else {
+                query += ` and j.title like '%${queryName}%' `
+            }
+        }
+
         query += `group by j.id_job, jt.id_tag order by j.id_job asc;`
         return db.query(query);
     },

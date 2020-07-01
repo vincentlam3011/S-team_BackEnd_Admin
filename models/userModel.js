@@ -3,15 +3,21 @@ var convertBlobB64 = require('../middleware/convertBlobB64');
 const { update } = require('lodash');
 
 module.exports = {
-    getEmployees: (isManager, queryName) => {
+    getEmployees: (isManager, queryName, queryNameCount) => {
         let queryColumns = ` id_user,fullname,username,tel,isManager `;
-        if (!queryName.replace(/\s/g, '').length) {
-            queryName = '';
+        
+        let queryNameText  = '';
+        if(queryName.length > 3) {
+            queryNameText = `round(match(fullname) against ('${queryName}')) > ${queryNameCount/2}`;
         }
+        else {
+            queryNameText = `fullname LIKE '%${queryName}%'`;
+        }
+
         if (isManager >= 0 && isManager <= 1)
-            return db.query(`select` + queryColumns + `from employees where isManager = ${isManager} and (fullname like '%${queryName}%' or username like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from employees where isManager = ${isManager} and (${queryNameText} or username like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from employees where (match (fullname) against ('${queryName}') or username like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from employees where (${queryNameText} or username like '%${queryName}%');`);
     },
     getByUsername: (username) => {
         return db.query(`select * from employees where username = '${username}'`);
@@ -41,25 +47,37 @@ module.exports = {
         }
         return db.query(`update users set account_status = ${account_status} where id_user = ${id_user}`)
     },
-    getClientPersonalUsers: (account_status, queryName) => {
+    getClientPersonalUsers: (account_status, queryName, queryNameCount) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity `;
-        if (!queryName.replace(/\s/g, '').length) {
-            queryName = '';
+        
+        let queryNameText  = '';
+        if(queryName.length > 3) {
+            queryNameText = `round(match(fullname) against ('${queryName}')) > ${queryNameCount/2}`;
         }
+        else {
+            queryNameText = `fullname LIKE '%${queryName}%'`;
+        }
+
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (${queryNameText} or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (${queryNameText}  or email like '%${queryName}%');`);
     },
-    getClientBusinessUsers: (account_status, queryName) => {
+    getClientBusinessUsers: (account_status, queryName, queryNameCount) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity, c.company_name, c.position `;
-        if (!queryName.replace(/\s/g, '').length) {
-            queryName = '';
+        
+        let queryNameText  = '';
+        if(queryName.length > 3) {
+            queryNameText = `round(match(fullname) against ('${queryName}')) > ${queryNameCount/2}`;
         }
+        else {
+            queryNameText = `fullname LIKE '%${queryName}%'`;
+        }
+
         if (account_status >= -1 && account_status <= 2)
-            return db.query(`select` + queryColumns + `from users as u, companies as c where account_status = ${account_status} and c.id_user = u.id_user and isBusinessUser = 1 and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u, companies as c where account_status = ${account_status} and c.id_user = u.id_user and isBusinessUser = 1 and (${queryNameText} or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u, companies as c where isBusinessUser = 1 and c.id_user = u.id_user and (match(fullname) against ('${queryName}') or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u, companies as c where isBusinessUser = 1 and c.id_user = u.id_user and (${queryNameText} or email like '%${queryName}%');`);
     },
     deleteAnEmployee: (id_user) => {
         return db.query(`delete from employees where id_user = ${id_user}`);
