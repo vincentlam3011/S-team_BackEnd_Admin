@@ -99,7 +99,7 @@ module.exports = {
             }
         }
 
-        query += `group by j.id_job, jt.id_tag order by j.id_job asc;`
+        query += `order by j.id_job asc;`
         return db.query(query);
     },
     getJobsListByApplicant: (id, queryName, status, isFulltext, wordsCount) => {
@@ -120,7 +120,7 @@ module.exports = {
             }
         }
 
-        query += `group by j.id_job, jt.id_tag order by j.id_job asc;`
+        query += `order by j.id_job asc;`
         return db.query(query);
     },
     setJobStatus: (id, status) => {

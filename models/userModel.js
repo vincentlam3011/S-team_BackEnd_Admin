@@ -57,11 +57,14 @@ module.exports = {
         else {
             queryNameText = `fullname LIKE '%${queryName}%'`;
         }
-
-        if (account_status >= -1 && account_status <= 2)
+        console.log(account_status);
+        if (account_status >= -1 && account_status <= 2) {
+            console.log(queryNameText);
+            console.log(account_status);
             return db.query(`select` + queryColumns + `from users as u where account_status = ${account_status} and isBusinessUser = 0  and (${queryNameText} or email like '%${queryName}%');`);
+        }
         else
-            return db.query(`select` + queryColumns + `from users as u where isBusinessUser = 0  and (${queryNameText}  or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u where account_status != 0 and isBusinessUser = 0  and (${queryNameText}  or email like '%${queryName}%');`);
     },
     getClientBusinessUsers: (account_status, queryName, queryNameCount) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity, c.company_name, c.position `;
@@ -77,7 +80,7 @@ module.exports = {
         if (account_status >= -1 && account_status <= 2)
             return db.query(`select` + queryColumns + `from users as u, companies as c where account_status = ${account_status} and c.id_user = u.id_user and isBusinessUser = 1 and (${queryNameText} or email like '%${queryName}%');`);
         else
-            return db.query(`select` + queryColumns + `from users as u, companies as c where isBusinessUser = 1 and c.id_user = u.id_user and (${queryNameText} or email like '%${queryName}%');`);
+            return db.query(`select` + queryColumns + `from users as u, companies as c where account_status != 0 and  isBusinessUser = 1 and c.id_user = u.id_user and (${queryNameText} or email like '%${queryName}%');`);
     },
     deleteAnEmployee: (id_user) => {
         return db.query(`delete from employees where id_user = ${id_user}`);

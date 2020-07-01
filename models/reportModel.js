@@ -2,17 +2,26 @@ var db = require('../utils/db');
 
 module.exports = {
     getReportsList:(status, queryName) => {
+        let queryNameCount = queryName.trim().split(/\s+/).length || 0;
+        let queryNameText = '';
+        if(queryName.length > 3) {
+            queryNameText = ` round(match(u1.fullname) against('${queryName}')) > ${queryNameCount/2} `;
+        }
+        else {
+            queryNameText = ` u1.fullname like '%${queryName}%' `;
+        }
+
         if(queryName === '' && status === 3) {
             return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`);
         }
         else if(status === 3 && queryName !== '') {
-            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name, match(u1.fullname) against('${queryName}') as fullnameRanking from reports as r, users as u1, users as u2 where match(u1.fullname) against('${queryName}') and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
+            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where ${queryNameText} and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
         }
         else if(status !== 3 && queryName === '') {
             return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where r.status = ${status} and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 order by report_date desc`)
         }
         else {
-            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name, match(u1.fullname) against('${queryName}') as fullnameRanking from reports as r, users as u1, users as u2 where match(u1.fullname) against('${queryName}') and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 and r.status = ${status} order by report_date desc`)
+            return db.query(`select r.*, u1.fullname as user1_name, u2.fullname as user2_name from reports as r, users as u1, users as u2 where ${queryNameText} and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 and r.status = ${status} order by report_date desc`)
         }
     },
     setReportStatus: (id_report, status, solution) => {
