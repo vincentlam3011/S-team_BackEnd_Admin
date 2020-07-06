@@ -9,8 +9,6 @@ router.post('/getReportsList', (req, res, next) => {
     let status = Number.parseInt(req.body.status);
     let queryName = req.body.queryName;
 
-    console.log(status);
-    console.log(queryName);
     reportModel.getReportsList(status, queryName)
         .then(data => {
             let finalData = data.slice(take*(page - 1), take*page);
@@ -18,7 +16,22 @@ router.post('/getReportsList', (req, res, next) => {
         }).catch(err => {
             response(res, DEFINED_CODE.GET_DATA_FAIL, err);
         })
-})
+});
+
+router.post('/getJobReportsList', (req, res, next) => {    
+    let page = Number.parseInt(req.body.page);
+    let take = Number.parseInt(req.body.take);
+    let status = Number.parseInt(req.body.status);
+    let queryName = req.body.queryName;
+    
+    reportModel.getJobReportsList(status, queryName)
+        .then(data => {
+            let finalData = data.slice(take*(page - 1), take*page);
+            response(res, DEFINED_CODE.GET_DATA_SUCCESS,{list: finalData, total: data.length, page: page});
+        }).catch(err => {
+            response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+        })
+});
 
 router.post('/setReportStatus', (req, res, next) => {
     let id_report = Number.parseInt(req.body.id_report);
@@ -30,6 +43,18 @@ router.post('/setReportStatus', (req, res, next) => {
         }).catch(err => {
             response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
         })
-})
+});
+
+router.post('/setJobReportStatus', (req, res, next) => {
+    let id_report = Number.parseInt(req.body.id_report);
+    let status  = Number.parseInt(req.body.status);
+    let solution = req.body.solution;
+    reportModel.setJobReportStatus(id_report, status, solution)
+        .then(data => {
+            response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, {RowChanged: data.RowChanged});
+        }).catch(err => {
+            response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
+        })
+});
 
 module.exports = router;

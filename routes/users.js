@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
+const transactionModel = require('../models/transactionModel');
 var bcrypt = require('bcrypt');
 const { response, DEFINED_CODE } = require('../config/response');
 const { result } = require('lodash');
@@ -284,5 +285,78 @@ router.put('/resetPassword/:id', (req, res, next) => {
     }
   })
 })
+
+
+router.post('/getTransactionForEmpployer', function (req, res, next) {
+  let page = Number.parseInt(req.body.page) || 1;
+  let take = Number.parseInt(req.body.take) || 6;
+  let id = Number.parseInt(req.body.id) || 1;  
+  let id_status = Number.parseInt(req.body.id_status) || 0;
+  let id_job = Number.parseInt(req.body.id_job) || '';
+
+  transactionModel.getTransactionForEmpployer(id, id_status, id_job)
+    .then(data => {
+      let finalData = data;
+      let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { list: realData, total: finalData.length, page: page });
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+});
+
+router.post('/getTransactionForEmployee', function (req, res, next) {
+  let page = Number.parseInt(req.body.page) || 1;
+  let take = Number.parseInt(req.body.take) || 6;
+  let id = Number.parseInt(req.body.id) || 1;
+  let id_status = Number.parseInt(req.body.id_status) || 0;
+  let id_job = Number.parseInt(req.body.id_job) || '';
+
+  transactionModel.getTransactionForEmployee(id, id_status, id_job)
+    .then(data => {
+      let finalData = data;
+      let realData = finalData.slice((page - 1) * take, (page - 1) * take + take);
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { list: realData, total: finalData.length, page: page });
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+});
+
+
+router.post('/getPaymentFromJob', function (req, res, next) {
+  let id_transaction = Number.parseInt(req.body.id_transaction);
+  if(isNaN(id_transaction)) {
+    response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+  }
+  else {
+    transactionModel.getPayment(id_transaction)
+    .then(data => {
+      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { RowChanged: data.RowChanged });
+    }).catch(err => {
+      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+  }
+});
+
+router.post('/getRefundForEmployer', function (req, res, next) {
+  let id_transaction = Number.parseInt(req.body.id_transaction);
+  let id_applicant = Number.parseInt(req.body.id_applicant);
+  let amount = Number.parseInt(req.body.amount);
+  let refundPercentage = Number.parseInt(req.body.refundPercentage);
+  let leftover = Number.parseInt(req.body.leftover);
+  let reason = Number.parseInt(req.body.reason);
+
+  // if(isNaN(id_transaction)) {
+  //   response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+  // }
+  // else {
+  //   transactionModel.getPayment(id_transaction)
+  //   .then(data => {
+  //     response(res, DEFINED_CODE.GET_DATA_SUCCESS, { RowChanged: data.RowChanged });
+  //   }).catch(err => {
+  //     response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+  //   })
+  // }
+
+});
 
 module.exports = router;
