@@ -50,6 +50,10 @@ module.exports = {
         select email from users where id_user = ${id_user};
         `)
     },
+    rejectUserVerificationProposal: (id) => {
+        let clearQuery = `update users set portrait = null, frontIdPaper = null, backIdPaper = null where id_user = ${id};`;
+        return db.query(clearQuery);
+    },
     getClientPersonalUsers: (account_status, queryName, queryNameCount) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity `;
         
