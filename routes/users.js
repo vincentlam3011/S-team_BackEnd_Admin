@@ -8,6 +8,8 @@ const { response, DEFINED_CODE } = require('../config/response');
 const { result } = require('lodash');
 const saltRounds = 12;
 
+var firebase = require('../utils/firebaseFunction')
+
 router.get('/', function (req, res, next) {
   var token = req.headers.authorization.slice(7);
   var decodedPayload = jwt.decode(token, {
@@ -165,6 +167,30 @@ router.put('/setClientUserStatus', (req, res, next) => {
   userModel.setUserAccountStatus(id_user, account_status)
     .then(data => {
       response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Status changed to ${account_status}`);
+      if(account_status === 2) {
+        // tài khoản được xác thực        
+        let content = {
+          type: 11,
+          date: Date.now()
+        }
+
+        // tạo thông báo cho người chủ,                                
+        firebase.pushNotificationsFirebase(data[1].email, content);
+      }
+      else if(account_status === 1) {
+        // tài khoản được xác thực        
+        let content = {
+          type: 12,
+          date: Date.now()
+        }
+
+        // tạo thông báo cho người chủ,                                
+        firebase.pushNotificationsFirebase(data[1].email, content);
+      }
+      else {
+        // do nothing
+      }
+
     }).catch(err => {
       response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
     })

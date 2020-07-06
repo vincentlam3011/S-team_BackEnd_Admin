@@ -13,7 +13,7 @@ module.exports = {
         select tr.*, u1.fullname as employer, a.id_job, a.start, a.end, j.deadline, j.start_date, j.end_date
         from transactions as tr, users as u1, applicants as a, (select jo.*, jp.deadline, jt.start_date, jt.end_date from ((jobs as jo left join jobs_production as jp on jo.id_job = jp.id_job) left join jobs_temporal as jt on jo.id_job = jt.id_job)) as j
         where a.id_job = j.id_job and a.id_job like '%${id_job}%' and j.employer = u1.id_user and a.id_applicant = tr.id_applicant and tr.status = ${id_status} and a.id_user = ${id_user} order by a.id_applicant desc;`
-        console.log(sqlQuery);
+        
         return db.query(sqlQuery);
     },
     getPayment: (id_transaction) => { // thay đổi trạng thái thành đã nhận thanh toán xong

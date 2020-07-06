@@ -5,6 +5,8 @@ const { response, DEFINED_CODE } = require('../config/response');
 var _ = require('lodash');
 const { query } = require('express');
 
+var firebase = require('../utils/firebaseFunction')
+
 router.post('/getJobsList', function (req, res, next) {
     let page = Number.parseInt(req.body.page) || 1;
     let take = Number.parseInt(req.body.take) || 6;
@@ -189,11 +191,28 @@ router.put('/setJobStatusById', (req, res, next) => {
     jobModel.getJobStatusById(id)
         .then(data => {
             let curStt = data[0].id_status;
-            if (status === -1) {
+            if (status === 0) {
                 if (curStt === 1) {
                     jobModel.deleteJobById(id)
                         .then(result => {
                             response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job deleted (physically)!`);
+
+                            // lấy tên chủ đề và tạo nội dung
+                            let content = {
+                                fullname: data[1].fullname,
+                                job: data[1].title,
+                                type: 10,
+                                date: Date.now()
+                            }
+
+                            // tạo thông báo cho người chủ,                                
+                            firebase.pushNotificationsFirebase(data[1].email, content);
+
+                            // tạo thông báo cho người làm,
+                            data[2].forEach((e) => {
+                                firebase.pushNotificationsFirebase(e.email, content);
+                            })
+
                         }).catch(err => {
                             response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
                         })
@@ -201,6 +220,23 @@ router.put('/setJobStatusById', (req, res, next) => {
                     jobModel.setJobStatus(id, status)
                         .then(result => {
                             response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job ID ${id} - status changed to ${status}`);
+
+                            // lấy tên chủ đề và tạo nội dung
+                            let content = {
+                                fullname: data[1].fullname,
+                                job: data[1].title,
+                                type: 4,
+                                date: Date.now()
+                            }
+
+                            // tạo thông báo cho người chủ,                                
+                            firebase.pushNotificationsFirebase(data[1].email, content);
+
+                            // tạo thông báo cho người làm,
+                            data[2].forEach((e) => {
+                                firebase.pushNotificationsFirebase(e.email, content);
+                            })
+
                         }).catch(err => {
                             response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
                         })
@@ -209,6 +245,24 @@ router.put('/setJobStatusById', (req, res, next) => {
                 jobModel.setJobStatus(id, status)
                     .then(result => {
                         response(res, DEFINED_CODE.INTERACT_DATA_SUCCESS, `Job ID ${id} - status changed to ${status}`);
+                        // Chỉ có thể khôi phục lại giai đoạn đang tuyển từ phía admin
+                        
+                        // lấy tên chủ đề và tạo nội dung
+                        let jobTitle = data[1].title;
+                        let content = {
+                            fullname: data[1].fullname,
+                            job: jobTitle,
+                            type: 6,
+                            date: Date.now()
+                        }
+
+                        // tạo thông báo cho người chủ,                                
+                        firebase.pushNotificationsFirebase(data[1].email, content);
+
+                        // tạo thông báo cho người làm,
+                        data[2].forEach((e) => {
+                            firebase.pushNotificationsFirebase(e.email, content);
+                        })
                     }).catch(err => {
                         response(res, DEFINED_CODE.INTERACT_DATA_FAIL, err);
                     })

@@ -124,6 +124,11 @@ module.exports = {
         return db.query(`select * from statuses;`);
     },
     getJobStatusById: (id) => {
-        return db.query(`select id_status from jobs where id_job = ${id};`);
+        let sqlQuery = `
+        select id_status from jobs where id_job = ${id};
+        select j.title, u.email, u.fullname from jobs as j, users as u where j.employer = u.id_user and j.id_job = ${id};
+        select u.email, u.fullname from applicants as a, users as u where a.id_user = u.id_user and a.id_job = ${id};
+        `
+        return db.query(sqlQuery);
     }
 }

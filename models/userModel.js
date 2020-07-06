@@ -45,7 +45,10 @@ module.exports = {
         if (account_status < -1 || account_status > 2) {
             return db.query('');
         }
-        return db.query(`update users set account_status = ${account_status} where id_user = ${id_user}`)
+        return db.query(`
+        update users set account_status = ${account_status} where id_user = ${id_user};
+        select email from users where id_user = ${id_user};
+        `)
     },
     getClientPersonalUsers: (account_status, queryName, queryNameCount) => {
         let queryColumns = ` u.id_user, u.fullname, u.email, u.dob, u.dial, u.address, u.isBusinessUser, u.gender, u.account_status, u.identity `;
@@ -57,7 +60,6 @@ module.exports = {
         else {
             queryNameText = `fullname LIKE '%${queryName}%'`;
         }
-        console.log(account_status);
         if (account_status >= -1 && account_status <= 2) {
             console.log(queryNameText);
             console.log(account_status);
