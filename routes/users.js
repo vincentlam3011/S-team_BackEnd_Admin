@@ -25,7 +25,7 @@ router.post('/getEmployeesList', function (req, res, next) {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   let { queryName, isManager } = req.body;
-  
+
   let queryNameCount = queryName.trim().split(/\s+/).length || 0;
 
   userModel.getEmployees(isManager, queryName, queryNameCount)
@@ -170,13 +170,23 @@ router.put('/setClientUserStatus', (req, res, next) => {
     })
 })
 
+router.put('/rejectVerificationProposal', (req, res, next) => {
+  var { id_user } = req.body;
+  userModel.rejectUserVerificationProposal(id_user)
+    .then(data => {
+      response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Verification data deleted. reamin not-verified!`);
+    }).catch(err => {
+      response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
+    })
+})
+
 router.post('/getClientUsersList/:isBusinessUser', (req, res, next) => {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
   var isBusinessUser = req.params.isBusinessUser;
   let queryName = req.body.queryName || '';
   let account_status = req.body.account_status || -2;
-  
+
   let queryNameCount = queryName.trim().split(/\s+/).length || 0;
 
   if (isBusinessUser == 0) {
@@ -290,7 +300,7 @@ router.put('/resetPassword/:id', (req, res, next) => {
 router.post('/getTransactionForEmpployer', function (req, res, next) {
   let page = Number.parseInt(req.body.page) || 1;
   let take = Number.parseInt(req.body.take) || 6;
-  let id = Number.parseInt(req.body.id) || 1;  
+  let id = Number.parseInt(req.body.id) || 1;
   let id_status = Number.parseInt(req.body.id_status) || 0;
   let id_job = Number.parseInt(req.body.id_job) || '';
 
@@ -324,16 +334,16 @@ router.post('/getTransactionForEmployee', function (req, res, next) {
 
 router.post('/getPaymentFromJob', function (req, res, next) {
   let id_transaction = Number.parseInt(req.body.id_transaction);
-  if(isNaN(id_transaction)) {
+  if (isNaN(id_transaction)) {
     response(res, DEFINED_CODE.GET_DATA_FAIL, err);
   }
   else {
     transactionModel.getPayment(id_transaction)
-    .then(data => {
-      response(res, DEFINED_CODE.GET_DATA_SUCCESS, { RowChanged: data.RowChanged });
-    }).catch(err => {
-      response(res, DEFINED_CODE.GET_DATA_FAIL, err);
-    })
+      .then(data => {
+        response(res, DEFINED_CODE.GET_DATA_SUCCESS, { RowChanged: data.RowChanged });
+      }).catch(err => {
+        response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+      })
   }
 });
 
