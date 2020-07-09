@@ -3,6 +3,9 @@ var router = express.Router();
 var jwt = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 const transactionModel = require('../models/transactionModel');
+const momoService = require('../middleware/momoService');
+const https = require('https');
+
 var bcrypt = require('bcrypt');
 const { response, DEFINED_CODE } = require('../config/response');
 const { result } = require('lodash');
@@ -347,25 +350,64 @@ router.post('/getPaymentFromJob', function (req, res, next) {
   }
 });
 
-router.post('/getRefundForEmployer', function (req, res, next) {
+router.post('/getRefundForEmployer', async function (req, res1, next) {
   let id_transaction = Number.parseInt(req.body.id_transaction);
   let id_applicant = Number.parseInt(req.body.id_applicant);
-  let amount = Number.parseInt(req.body.amount);
   let refundPercentage = Number.parseInt(req.body.refundPercentage);
   let leftover = Number.parseInt(req.body.leftover);
-  let reason = Number.parseInt(req.body.reason);
+  let reason = req.body.reason;
+  console.log('refundPercentage:', refundPercentage)
+  if (isNaN(id_transaction)) {
+    response(res, DEFINED_CODE.ERROR_ID, err);
+  }
+  else {
+    transactionModel.getTransactionByIdTransaction(id_transaction).then(async data => {
+      if (data.status == 0) {
+        data[0].refundPercentage = refundPercentage;
+        data[0].reason = reason ? reason : '';
+        let momo = momoService.refundMoneyFromF2LToMoMo(data[0]);
+        let body = momo.body;
+        console.log('momo:', momo)
+        var req = await https.request(momo.options, (res) => {
+          console.log(`Status: ${res.statusCode}`);
+          console.log(`Headers: ${JSON.stringify(res.headers)}`);
+          res.setEncoding('utf8');
+          res.on('data', (body) => {
+            console.log('Body');
+            console.log(body);
+            transactionModel.getPayment(data[0])
+              .then(data => {
+                response(res1, DEFINED_CODE.GET_DATA_SUCCESS,data);
+              }).catch(err => {
+                response(res1, DEFINED_CODE.GET_DATA_FAIL, err);
+              })
+          });
+          res.on('end', () => {
+            console.log('No more data in response.');
+          });
+        });
 
-  // if(isNaN(id_transaction)) {
-  //   response(res, DEFINED_CODE.GET_DATA_FAIL, err);
-  // }
-  // else {
-  //   transactionModel.getPayment(id_transaction)
-  //   .then(data => {
-  //     response(res, DEFINED_CODE.GET_DATA_SUCCESS, { RowChanged: data.RowChanged });
-  //   }).catch(err => {
-  //     response(res, DEFINED_CODE.GET_DATA_FAIL, err);
-  //   })
-  // }
+        req.on('error', (e) => {
+          console.log(`problem with request: ${e.message}`);
+        });
+
+        // write data to request body
+        req.write(body);
+        req.end();
+
+      }
+      else {
+        response(res1, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+
+      }
+
+
+    }).catch(err => {
+      console.log('err:', err)
+      response(res1, DEFINED_CODE.GET_DATA_FAIL, err);
+    })
+
+  }
 
 });
 
