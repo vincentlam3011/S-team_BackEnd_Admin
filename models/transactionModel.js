@@ -1,5 +1,5 @@
 var db = require('../utils/db');
-
+var moment = require('moment');
 module.exports = {
     getTransactionForEmpployer: (id, id_status, id_job) => {
         let sqlQuery = `
@@ -16,11 +16,15 @@ module.exports = {
         
         return db.query(sqlQuery);
     },
-    getPayment: (id_transaction) => { // thay đổi trạng thái thành đã nhận thanh toán xong
+    getTransactionByIdTransaction: (id_transaction)=>{
+        let sql= `select * from transactions where id_transaction = ${id_transaction}`
+        return db.query(sql);
+    },
+    getPayment: (data) => { // thay đổi trạng thái thành đã nhận thanh toán xong
         let today = new Date();
-        let todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`
+        let todayString = moment().format('YYYY-MM-DD, h:mm:ss a');
         let sqlQuery = `
-        update transactions set status = 1, paid_date = '${todayString}' where id_transaction = ${id_transaction}
+        update transactions set status = 1, paid_date = '${todayString}',refund=${data.refundPercentage},messageNotice='${data.reason}' where id_transaction = ${data.id_transaction}
         `
         return db.query(sqlQuery);
     },    
