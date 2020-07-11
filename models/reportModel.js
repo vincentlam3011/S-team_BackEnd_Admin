@@ -62,6 +62,7 @@ module.exports = {
         else {
             sqlQuery = `select r.*, u1.fullname as user1_name, u2.fullname as user2_name, tr.id_transaction, tr.amount from reports as r, users as u1, users as u2, transactions as tr where ${queryNameText} and u1.id_user = r.id_user1 and u2.id_user = r.id_user2 and r.status = ${status} and r.type = 1 and r.id_applicant = tr.id_applicant order by report_date desc`;
         }
+        console.log(sqlQuery);
         return db.query(sqlQuery);
     },
     setJobReportStatus: (id_report, status, solution) => {

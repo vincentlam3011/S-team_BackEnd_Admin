@@ -46,13 +46,13 @@ router.post('/setReportStatus', (req, res, next) => {
                 // lấy tên chủ đề và tạo nội dung
                 let content = {
                     type: 7,
-                    employee: data[1].fullname,
-                    job: data[1].title,
+                    employee: data[1][0].fullname,
+                    job: data[1][0].title,
                     solution: solution,
                     date: Date.now()
                 }
 
-                firebase.pushNotificationsFirebase(data[1].email, content);
+                firebase.pushNotificationsFirebase(data[1][0].email, content);
             }
         }).catch(err => {
             response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
@@ -70,11 +70,11 @@ router.post('/setJobReportStatus', (req, res, next) => {
                 // Hầu như chỉ được gọi api này khi không cho hoàn tiền, hoàn tiền thì sẽ gọi ở chỗ khác
                 let content = {
                     type: 8,
-                    job: data[1].title,
+                    job: data[1][0].title,
                     date: Date.now()
                 }
 
-                firebase.pushNotificationsFirebase(data[1].email, content);
+                firebase.pushNotificationsFirebase(data[1][0].email, content);
             }
         }).catch(err => {
             response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);

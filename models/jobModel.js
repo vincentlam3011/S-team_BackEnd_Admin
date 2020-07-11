@@ -50,7 +50,7 @@ module.exports = {
         select j.*, t.name as topic_name, p.name as province, d.name as district
         from jobs as j , users as u, provinces as p, districts as d, job_topics as t        
         ${count > 0 ? ('where ' + query + ' and t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district') : 'where t.id_jobtopic = j.job_topic and j.area_province = p.id_province and j.area_district = d.id_district'}
-        group by j.id_job order by j.id_job asc`;
+        group by j.id_job order by j.id_job desc`;
         return db.query(finalQuery);
     },
     getJobById: (id) => {

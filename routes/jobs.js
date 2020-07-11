@@ -199,14 +199,14 @@ router.put('/setJobStatusById', (req, res, next) => {
 
                             // lấy tên chủ đề và tạo nội dung
                             let content = {
-                                fullname: data[1].fullname,
-                                job: data[1].title,
+                                fullname: data[1][0].fullname,
+                                job: data[1][0].title,
                                 type: 10,
                                 date: Date.now()
                             }
 
                             // tạo thông báo cho người chủ,                                
-                            firebase.pushNotificationsFirebase(data[1].email, content);
+                            firebase.pushNotificationsFirebase(data[1][0].email, content);
 
                             // tạo thông báo cho người làm,
                             data[2].forEach((e) => {
@@ -223,14 +223,14 @@ router.put('/setJobStatusById', (req, res, next) => {
 
                             // lấy tên chủ đề và tạo nội dung
                             let content = {
-                                fullname: data[1].fullname,
-                                job: data[1].title,
+                                fullname: data[1][0].fullname,
+                                job: data[1][0].title,
                                 type: 4,
                                 date: Date.now()
                             }
 
                             // tạo thông báo cho người chủ,                                
-                            firebase.pushNotificationsFirebase(data[1].email, content);
+                            firebase.pushNotificationsFirebase(data[1][0].email, content);
 
                             // tạo thông báo cho người làm,
                             data[2].forEach((e) => {
@@ -248,16 +248,16 @@ router.put('/setJobStatusById', (req, res, next) => {
                         // Chỉ có thể khôi phục lại giai đoạn đang tuyển từ phía admin
                         
                         // lấy tên chủ đề và tạo nội dung
-                        let jobTitle = data[1].title;
+                        let jobTitle = data[1][0].title;
                         let content = {
-                            fullname: data[1].fullname,
+                            fullname: data[1][0].fullname,
                             job: jobTitle,
                             type: 6,
                             date: Date.now()
                         }
 
                         // tạo thông báo cho người chủ,                                
-                        firebase.pushNotificationsFirebase(data[1].email, content);
+                        firebase.pushNotificationsFirebase(data[1][0].email, content);
 
                         // tạo thông báo cho người làm,
                         data[2].forEach((e) => {

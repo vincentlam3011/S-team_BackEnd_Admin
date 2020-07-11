@@ -51,7 +51,10 @@ module.exports = {
         `)
     },
     rejectUserVerificationProposal: (id) => {
-        let clearQuery = `update users set portrait = null, frontIdPaper = null, backIdPaper = null where id_user = ${id};`;
+        let clearQuery = `
+        update users set portrait = null, frontIdPaper = null, backIdPaper = null where id_user = ${id};
+        select email from users where id_user = ${id};
+        `;
         return db.query(clearQuery);
     },
     getClientPersonalUsers: (account_status, queryName, queryNameCount) => {

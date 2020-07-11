@@ -175,17 +175,17 @@ router.put('/setClientUserStatus', (req, res, next) => {
         }
 
         // tạo thông báo cho người chủ,                                
-        firebase.pushNotificationsFirebase(data[1].email, content);
+        firebase.pushNotificationsFirebase(data[1][0].email, content);
       }
       else if(account_status === 1) {
-        // tài khoản được xác thực        
+        // tài khoản chuyển sang chờ xác thực        
         let content = {
           type: 12,
           date: Date.now()
         }
 
         // tạo thông báo cho người chủ,                                
-        firebase.pushNotificationsFirebase(data[1].email, content);
+        firebase.pushNotificationsFirebase(data[1][0].email, content);
       }
       else {
         // do nothing
@@ -201,6 +201,12 @@ router.put('/rejectVerificationProposal', (req, res, next) => {
   userModel.rejectUserVerificationProposal(id_user)
     .then(data => {
       response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Verification data deleted. reamin not-verified!`);
+      let content = {
+        type: 13,
+        date: Date.now()
+      }
+      // tạo thông báo cho người chủ,                                
+      firebase.pushNotificationsFirebase(data[1][0].email, content);
     }).catch(err => {
       response(res, DEFINED_CODE.EDIT_PERSONAL_FAIL, err);
     })
