@@ -65,6 +65,9 @@ module.exports = {
         WHERE createDate BETWEEN Date_add(NOW(), interval - 12 month) AND  NOW();`)
     },
     getPendingReports: () => {
-        return db.query(`select count(id_report) as value from reports where status = 0;`);
-    }
+        return db.query(`select count(id_report) as value from reports where status = 0 and type = 0;`);
+    },
+    getPendingJobReports: () => {
+        return db.query(`select count(id_report) as value from reports where status = 0 and type = 1;`);
+    },
 }

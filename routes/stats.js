@@ -71,4 +71,13 @@ router.get('/getPendingReports', (req, res, next) => {
         })
 })
 
+router.get('/getPendingJobReports', (req, res, next) => {
+    statModel.getPendingJobReports()
+        .then(data => {
+            response(res, DEFINED_CODE.GET_DATA_SUCCESS, data[0]);
+        }).catch(err => {
+            response(res, DEFINED_CODE.GET_DATA_FAIL, err);
+        })
+})
+
 module.exports = router;

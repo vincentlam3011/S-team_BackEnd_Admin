@@ -46,7 +46,7 @@ router.post('/setReportStatus', (req, res, next) => {
                 // lấy tên chủ đề và tạo nội dung
                 let content = {
                     type: 7,
-                    employee: data[1][0].fullname,
+                    employee_name: data[1][0].fullname,
                     job: data[1][0].title,
                     solution: solution,
                     date: Date.now()
@@ -69,6 +69,7 @@ router.post('/setJobReportStatus', (req, res, next) => {
             if(status === 1 && solution === 'Không hoàn tiền') { 
                 // Hầu như chỉ được gọi api này khi không cho hoàn tiền, hoàn tiền thì sẽ gọi ở chỗ khác
                 let content = {
+                    employee_name: fullname,
                     type: 8,
                     job: data[1][0].title,
                     date: Date.now()

@@ -25,6 +25,17 @@ router.get('/getAll', function (req, res, next) {
     })
 })
 
+
+router.get('/getAll', function (req, res, next) {
+  userModel.getEmployees()
+    .then(data => {
+      res.json(data);
+    }).catch(err => {
+      res.json(err);
+    })
+})
+
+
 router.post('/login', (req, res, next) => {
   console.log(req.body);
   passport.authenticate('local', { session: false }, (err, user, cb) => {

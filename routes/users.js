@@ -170,7 +170,7 @@ router.put('/setClientUserStatus', (req, res, next) => {
   userModel.setUserAccountStatus(id_user, account_status)
     .then(data => {
       response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, `Status changed to ${account_status}`);
-      if(account_status === 2) {
+      if (account_status === 2) {
         // tài khoản được xác thực        
         let content = {
           type: 11,
@@ -180,7 +180,7 @@ router.put('/setClientUserStatus', (req, res, next) => {
         // tạo thông báo cho người chủ,                                
         firebase.pushNotificationsFirebase(data[1][0].email, content);
       }
-      else if(account_status === 1) {
+      else if (account_status === 1) {
         // tài khoản chuyển sang chờ xác thực        
         let content = {
           type: 12,
@@ -387,6 +387,7 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
   let id_applicant = Number.parseInt(req.body.id_applicant);
   let refundPercentage = Number.parseInt(req.body.refundPercentage);
   let leftover = Number.parseInt(req.body.leftover);
+  let id_report = Number.parseInt(req.body.id_report);
   let reason = req.body.reason;
   console.log('refundPercentage:', refundPercentage)
   if (isNaN(id_transaction)) {
@@ -394,29 +395,84 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
   }
   else {
     transactionModel.getTransactionByIdTransaction(id_transaction).then(async data => {
-      if (data.status == 0) {
-        data[0].refundPercentage = refundPercentage;
-        data[0].reason = reason ? reason : '';
-        let momo = momoService.refundMoneyFromF2LToMoMo(data[0]);
+      console.log(data);
+      if (data[0].status === 0) {
+        let temp = { ...data[0] }
+        temp.refundPercentage = refundPercentage;
+        temp.reason = reason ? reason : '';
+
+        // demo diabled momo
+        // transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason)
+        // .then(data => {
+        //   response(res1, DEFINED_CODE.GET_DATA_SUCCESS,{code: 1});
+        //   let content = {
+        //     job: data[1][0].title,
+        //     refundPercentage: refundPercentage,
+        //     leftover: leftover,
+        //     type: 19,
+        //     date: Date.now()
+        //   }
+
+        //   // tạo thông báo cho người chủ,                                
+        //   firebase.pushNotificationsFirebase(data[1][0].email, content);
+        // }).catch(err => {
+        //   response(res1, DEFINED_CODE.GET_DATA_FAIL, err);
+        // })
+
+        // demo enabled momo
+        let momo = momoService.refundMoneyFromF2LToMoMo(temp);
         let body = momo.body;
         console.log('momo:', momo)
         var req = await https.request(momo.options, (res) => {
           console.log(`Status: ${res.statusCode}`);
           console.log(`Headers: ${JSON.stringify(res.headers)}`);
+          let returnBody = null;
           res.setEncoding('utf8');
           res.on('data', (body) => {
-            console.log('Body');
-            console.log(body);
-            transactionModel.getPayment(data[0])
-              .then(data => {
-                response(res1, DEFINED_CODE.GET_DATA_SUCCESS,data);
-              }).catch(err => {
-                response(res1, DEFINED_CODE.GET_DATA_FAIL, err);
-              })
+            returnBody = JSON.parse(body);
           });
+
           res.on('end', () => {
-            console.log('No more data in response.');
+            console.log(returnBody);
+            if (returnBody !== null) {
+              if (returnBody.status === 0) {
+                transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason)
+                  .then(data => {
+                    console.log('hello from transactionModel');
+                    response(res1, DEFINED_CODE.GET_DATA_SUCCESS, { code: 1 });
+                  // tạo thông báo cho người chủ, 
+                    let content1 = {
+                      job: data[1][0].title,
+                      refundPercentage: refundPercentage,
+                      employee_name: data[1][0].fullname,                      
+                      type: 9,
+                      date: Date.now()
+                    }
+                                                   
+                    firebase.pushNotificationsFirebase(data[1][0].employer_email, content1);
+
+                  // tạo thông báo cho người làm, 
+                    let content2 = {
+                      job: data[1][0].title,
+                      leftover: leftover,
+                      type: 19,
+                      date: Date.now()
+                    }
+                                                   
+                    firebase.pushNotificationsFirebase(data[1][0].email, content2);
+                  })
+                  .catch(err => {
+                    response(res1, DEFINED_CODE.GET_DATA_FAIL, err);
+                    // });
+                  })
+              }
+              else {
+                response(res1, DEFINED_CODE.GET_DATA_SUCCESS, { code: 0 });
+              }
+            }
+
           });
+
         });
 
         req.on('error', (e) => {
@@ -429,7 +485,7 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
 
       }
       else {
-        response(res1, DEFINED_CODE.INTERACT_DATA_FAIL, err);
+        response(res1, DEFINED_CODE.INTERACT_DATA_FAIL, { mess: "Đã thanh toán" });
 
       }
 

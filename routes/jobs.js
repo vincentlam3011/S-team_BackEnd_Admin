@@ -252,6 +252,7 @@ router.put('/setJobStatusById', (req, res, next) => {
                         let content = {
                             fullname: data[1][0].fullname,
                             job: jobTitle,
+                            id_job: id,
                             type: 6,
                             date: Date.now()
                         }
