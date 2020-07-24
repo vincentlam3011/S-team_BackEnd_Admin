@@ -72,7 +72,7 @@ module.exports = {
         else if(status === 1) {
             return db.query(`
             update reports set status = 1, solution = N'${solution}' where type = 1 and id_report = ${id_report};
-            select j.title, u.email, employee.fullname from users as u, users as employee jobs as j, reports as r where r.id_report = ${id_report} and r.id_job = j.id_job and u.id_user = j.employer and r.id_user2 = employee.id_user;
+            select j.title, u.email, employee.fullname from users as u, users as employee, jobs as j, reports as r where r.id_report = ${id_report} and r.id_job = j.id_job and u.id_user = j.employer and r.id_user2 = employee.id_user;
             `)
         }
         else {

@@ -46,12 +46,12 @@ module.exports = {
         `
         return db.query(sqlQuery);
     },
-    getRefund: (id_applicant, id_report, id_transaction, amount, refundPercentage, reason) => { // cập nhật lại số tiền mà người làm có thể nhận
+    getRefund: (id_applicant, id_report, id_transaction, amount, refundPercentage, reason, solution) => { // cập nhật lại số tiền mà người làm có thể nhận
         let finalAmount = amount * (100 - refundPercentage) / 100;
         let sqlQuery = `
         update transactions set refund = ${refundPercentage}, messageNotice = '${reason}', status = 2 where id_transaction = ${id_transaction};
-        select u.email, u.fullname, employer.email as employer_email j.title from users as u, users as employer, jobs as j, applicants as a where a.id_applicant = ${id_applicant} and a.id_user = u.id_user and a.id_job = j.id_job and j.employer = employer.id_user;
-        update reports set status = 1, solution = 'Hoàn tiền ${refundPercentage}%' where id_report = ${id_report};
+        select u.email, u.fullname, employer.email as employer_email, j.title from users as u, users as employer, jobs as j, applicants as a where a.id_applicant = ${id_applicant} and a.id_user = u.id_user and a.id_job = j.id_job and j.employer = employer.id_user;
+        update reports set status = 1, solution = 'Hoàn tiền ${refundPercentage}%. Nguyên nhân: ${solution}' where id_report = ${id_report};
         update applicants set id_status = 0 where id_applicant = ${id_applicant};
         delete from accepted where id_applicant = ${id_applicant};
         `

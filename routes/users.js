@@ -389,6 +389,7 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
   let leftover = Number.parseInt(req.body.leftover);
   let id_report = Number.parseInt(req.body.id_report);
   let reason = req.body.reason;
+  let solution = req.body.solution;
   console.log('refundPercentage:', refundPercentage)
   if (isNaN(id_transaction)) {
     response(res, DEFINED_CODE.ERROR_ID, err);
@@ -396,13 +397,13 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
   else {
     transactionModel.getTransactionByIdTransaction(id_transaction).then(async data => {
       console.log(data);
-      if (data[0].status === 0) {
+      if (data[0].status === 0 || data[0].status === 2) {
         let temp = { ...data[0] }
         temp.refundPercentage = refundPercentage;
         temp.reason = reason ? reason : '';
 
         // demo diabled momo
-        // transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason)
+        // transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason, solution)
         // .then(data => {
         //   response(res1, DEFINED_CODE.GET_DATA_SUCCESS,{code: 1});
         //   let content = {
@@ -436,9 +437,8 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
             console.log(returnBody);
             if (returnBody !== null) {
               if (returnBody.status === 0) {
-                transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason)
+                transactionModel.getRefund(id_applicant, id_report, temp.id_transaction, temp.amount, refundPercentage, reason, solution)
                   .then(data => {
-                    console.log('hello from transactionModel');
                     response(res1, DEFINED_CODE.GET_DATA_SUCCESS, { code: 1 });
                   // tạo thông báo cho người chủ, 
                     let content1 = {
@@ -485,7 +485,7 @@ router.post('/getRefundForEmployer', async function (req, res1, next) {
 
       }
       else {
-        response(res1, DEFINED_CODE.INTERACT_DATA_FAIL, { mess: "Đã thanh toán" });
+        response(res1, DEFINED_CODE.GET_DATA_SUCCESS, { code: 0 });
 
       }
 

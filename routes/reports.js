@@ -66,7 +66,7 @@ router.post('/setJobReportStatus', (req, res, next) => {
     reportModel.setJobReportStatus(id_report, status, solution)
         .then(data => {
             response(res, DEFINED_CODE.EDIT_PERSONAL_SUCCESS, {RowChanged: data.RowChanged});
-            if(status === 1 && solution === 'Không hoàn tiền') { 
+            if(status === 1) { 
                 // Hầu như chỉ được gọi api này khi không cho hoàn tiền, hoàn tiền thì sẽ gọi ở chỗ khác
                 let content = {
                     employee_name: fullname,
