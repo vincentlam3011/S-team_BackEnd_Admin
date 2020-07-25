@@ -6,7 +6,7 @@ var createConnection = () => {
         port: '3306',
         user: 'admin',
         password: 'rootsteam',
-        database: 'f2l_test_deploy',
+        database: 'f2l_deploy',
 
         // host: 'localhost',
         // port: '3306',
