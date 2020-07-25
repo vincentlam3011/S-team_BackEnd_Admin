@@ -101,6 +101,7 @@ router.put('/updateTopicById/:id', (req, res, next) => {
 
 router.post('/addNewTopic', (req, res, next) => {
     let { name, img } = req.body;
+    
     if (img) {
         img = convertBlobB64.convertB64ToBlob(img).toString('hex');
     }

@@ -60,7 +60,15 @@ module.exports = {
     },
     addJobTopic: (topic) => {
         let colQuery = `insert into job_topics (name, img, count) `;
-        let valQuery = `values('${topic.name}', x'${topic.img}', 0);`;
+
+        let valQuery = '';
+
+        if(topic.img) {
+            valQuery = `values('${topic.name}', x'${topic.img}', 0);`;
+        }
+        else {
+            valQuery = `values('${topic.name}', null, 0);`;
+        }
         let query = colQuery + valQuery;
         return db.query(query);
     }
